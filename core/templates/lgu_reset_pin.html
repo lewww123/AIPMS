@@ -1,0 +1,16 @@
+<h2>PIN Reset Successful</h2>
+
+<p><strong>Farmer:</strong> {{ farmer.full_name }}</p>
+<p><strong>Farmer ID:</strong> {{ farmer.farmer_id }}</p>
+
+<p style="font-size: 20px; color: green;">
+    <strong>New PIN: {{ new_pin }}</strong>
+</p>
+
+<p style="color: red;">
+    ⚠ Give this PIN to the farmer. They must change it on next login.
+</p>
+
+<br>
+
+<a href="{% url 'lgu_farmers' %}">← Back to Farmers</a>

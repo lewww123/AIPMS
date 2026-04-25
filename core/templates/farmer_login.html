@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Farmer Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f1f5f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #065f46;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    
+<div class="login-box">
+    <h2>Farmer Login</h2>
+
+    <form method="POST" action="{% url 'farmer_login' %}">
+    {% csrf_token %}
+
+    <input type="text" name="farmer_id" placeholder="Farmer ID" required>
+    <input type="password" name="pin" placeholder="4-digit PIN" maxlength="4" required>
+
+    <button type="submit">LOGIN</button>
+</form>
+
+    {% for message in messages %}
+        <p class="error">{{ message }}</p>
+    {% endfor %}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Farmers</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+        <a href="{% url 'lgu_farms' %}" class="sidebar-link">
+            <i class="fas fa-tractor"></i> Farms
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class="sidebar-link active">
+            <i class="fas fa-users"></i> Farmers
+        </a>
+
+        <a href="{% url 'lgu_analytics' %}" class="sidebar-link">
+            <i class="fas fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="{% url 'lgu_logs' %}" class="sidebar-link">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
+
+        <div class="sidebar-section">Management</div>
+
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
+
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Farmer Accounts</h2>
+                <p>Manage registered farmers and access controls</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <!-- SEARCH -->
+            <div class="panel">
+                <form method="GET" class="search-row">
+                    <input type="text" name="search"
+                           placeholder="Search Farmer ID, name, or contact"
+                           value="{{ search }}">
+
+                    <select name="status">
+                        <option value="">All</option>
+                        <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
+                        <option value="locked" {% if status == "locked" %}selected{% endif %}>Locked</option>
+                        <option value="temporary" {% if status == "temporary" %}selected{% endif %}>Temporary PIN</option>
+                    </select>
+
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+
+            <!-- TABLE -->
+            <div class="panel">
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 class="section-title">
+                        <i class="fas fa-users"></i> Farmers List
+                    </h3>
+
+                    <a href="{% url 'lgu_create_farmer' %}" class="btn">
+                        + Create Farmer
+                    </a>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Farmer ID</th>
+                            <th>Full Name</th>
+                            <th>Contact</th>
+                            <th>Address</th>
+                            <th>Status</th>
+                            <th>PIN Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for farmer in farmers %}
+                        <tr>
+                            <td>{{ farmer.farmer_id }}</td>
+                            <td>{{ farmer.full_name }}</td>
+                            <td>{{ farmer.contact_number }}</td>
+                            <td>{{ farmer.address }}</td>
+
+                            <td>
+                                {% if farmer.is_locked %}
+                                    <span class="badge badge-red">Locked</span>
+                                {% else %}
+                                    <span class="badge badge-green">Active</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if farmer.is_temporary_pin %}
+                                    <span class="badge badge-yellow">Temporary</span>
+                                {% else %}
+                                    <span class="badge badge-blue">Updated</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="action-links">
+                                <a href="{% url 'lgu_farmer_detail' farmer.id %}" class="view">View</a>
+                                <a href="{% url 'lgu_farmer_edit' farmer.id %}" class="edit">Edit</a>
+                                <a href="{% url 'lgu_farmer_delete' farmer.id %}" class="delete">Delete</a>
+                                <a href="{% url 'lgu_reset_pin' farmer.id %}" class="reset">Reset</a>
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">No farmers found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html> 

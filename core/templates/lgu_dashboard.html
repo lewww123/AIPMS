@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS| Department of Agriculture Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+
+    <style>
+        :root {
+            --primary: #15803d;
+            --primary-light: #dcfce7;
+            --sidebar: #0f2f1d;
+            --dark: #0f172a;
+            --muted: #64748b;
+            --bg: #f4f7f5;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --danger-bg: #fee2e2;
+            --danger: #991b1b;
+            --warning-bg: #fef3c7;
+            --warning: #92400e;
+            --info-bg: #dbeafe;
+            --info: #1e40af;
+            --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 270px;
+            background: linear-gradient(180deg, #0f2f1d, #071b10);
+            color: white;
+            padding: 1.5rem 1rem;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-brand i {
+            color: #22c55e;
+            font-size: 2rem;
+        }
+
+        .sidebar-brand strong {
+            display: block;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-brand small {
+            color: #bbf7d0;
+            font-size: 0.75rem;
+        }
+
+        .sidebar-section {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #86efac;
+            margin: 1rem 12px 0.5rem;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 14px;
+            border-radius: 12px;
+            color: #d1fae5;
+            text-decoration: none;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background: #16a34a;
+            color: white;
+        }
+
+        .sidebar-link.logout {
+            margin-top: 1.5rem;
+            background: rgba(220, 38, 38, 0.18);
+            color: #fecaca;
+        }
+
+        .main {
+            margin-left: 270px;
+            width: calc(100% - 270px);
+        }
+
+        .topbar {
+            background: white;
+            padding: 1.2rem 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-size: 1.35rem;
+        }
+
+        .topbar p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .container {
+            padding: 2rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 1rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.3rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .summary-value {
+            font-size: 1.9rem;
+            font-weight: 800;
+            margin-top: 6px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 0.8fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .alert-box {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .alert-danger { background: var(--danger-bg); color: var(--danger); }
+        .alert-warning { background: var(--warning-bg); color: var(--warning); }
+        .alert-info { background: var(--info-bg); color: var(--info); }
+        .alert-good { background: var(--primary-light); color: #166534; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f8fafc;
+            color: var(--muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .farm-link {
+            color: #15803d;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+
+        .mini-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mini-stat:last-child {
+            border-bottom: none;
+        }
+
+        .mini-stat strong {
+            color: var(--dark);
+        }
+
+        .mini-stat span {
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .layout {
+                flex-direction: column;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link active">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+       <a href="{% url 'lgu_farms' %}" class="sidebar-link">
+            <i class="fas fa-tractor"></i> Farms
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class ="sidebar-link">
+            <i class="fas fa-users"></i> Farmers
+        </a>
+
+        <a href="{% url 'lgu_analytics' %}" class="sidebar-link">
+            <i class="fas fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="{% url 'lgu_logs' %}" class="sidebar-link">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
+
+        <div class="sidebar-section">Management</div>
+
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
+
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Department of Agriculture Dashboard</h2>
+                <p>Regional farm monitoring, irrigation status, and sensor overview</p>
+            </div>
+
+            <div>
+                <i class="fas fa-map-marker-alt"></i>
+                Puerto Princesa DA
+            </div>
+        </div>
+
+        <div class="container">
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-label">Total Farms</div>
+                    <div class="summary-value">{{ farm_overview|length }}</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-label">Registered Farmers</div>
+                    <div class="summary-value">{{ farmers|length }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">System Status</div>
+                    <div class="summary-value" style="color:#15803d;">Operational</div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+
+                <section class="panel">
+                    <h3 class="section-title">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        Priority Alerts
+                    </h3>
+
+                    {% for alert in priority_alerts %}
+                        {% if alert.type == "danger" %}
+                            <div class="alert-box alert-danger">
+                                ⚠ {{ alert.message }}<br>
+                                <small>{{ alert.timestamp|date:"M d, Y h:i A" }}</small>
+                            </div>
+                        {% elif alert.type == "warning" %}
+                            <div class="alert-box alert-warning">
+                                ⚠ {{ alert.message }}<br>
+                                <small>{{ alert.timestamp|date:"M d, Y h:i A" }}</small>
+                            </div>
+                        {% else %}
+                            <div class="alert-box alert-info">
+                                ℹ {{ alert.message }}<br>
+                                <small>{{ alert.timestamp|date:"M d, Y h:i A" }}</small>
+                            </div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="alert-box alert-good">
+                            No urgent farm alerts at the moment.
+                        </div>
+                    {% endfor %}
+                </section>
+
+                <section class="panel">
+                    <h3 class="section-title">
+                        <i class="fas fa-satellite-dish"></i>
+                        Sensor Info
+                    </h3>
+
+                    <div class="mini-stat">
+                        <strong>Monitoring Mode</strong>
+                        <span>Automatic / Manual</span>
+                    </div>
+
+                    <div class="mini-stat">
+                        <strong>Data Source</strong>
+                        <span>Farm Blocks</span>
+                    </div>
+
+                    <div class="mini-stat">
+                        <strong>Refresh Status</strong>
+                        <span>Real-time API</span>
+                    </div>
+
+                    <div class="mini-stat">
+                        <strong>Alert Basis</strong>
+                        <span>Moisture + Pump</span>
+                    </div>
+                </section>
+
+            </div>
+
+            <h3 class="section-title">
+                <i class="fas fa-tractor"></i>
+                Farm Overview
+            </h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Farm Name</th>
+                        <th>Farmer</th>
+                        <th>Location</th>
+                        <th>Blocks</th>
+                        <th>Avg Moisture</th>
+                        <th>Avg pH</th>
+                        <th>Avg Temp</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in farm_overview %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'lgu_farm_detail' item.farm.id %}" class="farm-link">
+                                {{ item.farm.name }}
+                            </a>
+                        </td>
+
+                        <td>
+                            {% if item.farmer %}
+                                {{ item.farmer.farmer_profile.full_name }}
+                            {% else %}
+                                No Farmer
+                            {% endif %}
+                        </td>
+
+                        <td>{{ item.farm.location }}</td>
+                        <td>{{ item.block_count }}</td>
+                        <td>{{ item.avg_moisture }}%</td>
+                        <td>{{ item.avg_ph }}</td>
+                        <td>{{ item.avg_temp }}°C</td>
+
+                        <td>
+                            {% if item.status == "Healthy" %}
+                                <span class="badge badge-green">Healthy</span>
+                            {% elif item.status == "Needs Water" %}
+                                <span class="badge badge-red">Needs Water</span>
+                            {% else %}
+                                <span class="badge badge-blue">Too Wet</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="8">No farms found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

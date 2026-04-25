@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Farmer Detail</title>
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="panel">
+        <h2>{{ farmer.full_name }}</h2>
+
+        <div class="mini-stat">
+            <strong>Farmer ID</strong>
+            <span>{{ farmer.farmer_id }}</span>
+        </div>
+
+        <div class="mini-stat">
+            <strong>Contact</strong>
+            <span>{{ farmer.contact_number }}</span>
+        </div>
+
+        <div class="mini-stat">
+            <strong>Address</strong>
+            <span>{{ farmer.address }}</span>
+        </div>
+
+        <div class="mini-stat">
+            <strong>Status</strong>
+            <span>
+                {% if farmer.is_locked %}
+                    Locked
+                {% else %}
+                    Active
+                {% endif %}
+            </span>
+        </div>
+
+        <br>
+        <a href="{% url 'lgu_farmer_edit' farmer.id %}" class="btn">Edit</a>
+        <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">Back</a>
+    </div>
+
+    <div class="panel">
+        <h3>Assigned Farms</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Farm</th>
+                    <th>Location</th>
+                    <th>Blocks</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for farm in farms %}
+                <tr>
+                    <td>{{ farm.name }}</td>
+                    <td>{{ farm.location }}</td>
+                    <td>{{ farm.blocks.count }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No farms assigned.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>

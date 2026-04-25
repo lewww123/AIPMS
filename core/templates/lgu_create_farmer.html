@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Create Farmer</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+        <a href="{% url 'lgu_farms' %}" class="sidebar-link">
+            <i class="fas fa-tractor"></i> Farms
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class="sidebar-link">
+            <i class="fas fa-users"></i> Farmers
+        </a>
+
+        <a href="{% url 'lgu_analytics' %}" class="sidebar-link">
+            <i class="fas fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="{% url 'lgu_logs' %}" class="sidebar-link">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
+
+        <div class="sidebar-section">Management</div>
+
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link active">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
+
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Create Farmer Account</h2>
+                <p>Register a new farmer and farm system</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <div class="panel" style="max-width:600px;">
+
+                <h3 class="section-title">
+                    <i class="fas fa-user-plus"></i> Farmer Information
+                </h3>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" required>
+
+                    <label>Contact Number</label>
+                    <input type="text" name="contact_number">
+
+                    <label>Address</label>
+                    <textarea name="address"></textarea>
+
+                    <hr style="margin:15px 0; border:none; border-top:1px solid #e2e8f0;">
+
+                    <h3 class="section-title">
+                        <i class="fas fa-tractor"></i> Farm Information
+                    </h3>
+
+                    <label>Farm Name</label>
+                    <input type="text" name="farm_name" required>
+
+                    <label>Farm Location</label>
+                    <input type="text" name="farm_location" required>
+
+                    <label>Number of Blocks</label>
+                    <input type="number" name="block_count" min="1" value="1" required>
+
+                    <button type="submit" style="margin-top:10px; width:100%;">
+                        Create Farmer
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

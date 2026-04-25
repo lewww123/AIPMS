@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS| Farmer Created</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class="sidebar-link active">
+            <i class="fas fa-users"></i> Farmers
+        </a>
+
+        <div class="sidebar-section">Management</div>
+
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
+
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Farmer Account Created</h2>
+                <p>Account details successfully generated</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <div class="panel" style="max-width:500px;">
+
+                <h3 class="section-title">
+                    <i class="fas fa-check-circle"></i> Account Details
+                </h3>
+
+                <div class="mini-stat">
+                    <strong>Name</strong>
+                    <span>{{ full_name }}</span>
+                </div>
+
+                <div class="mini-stat">
+                    <strong>Farmer ID</strong>
+                    <span>{{ farmer_id }}</span>
+                </div>
+
+                <div class="mini-stat">
+                    <strong>Temporary PIN</strong>
+                    <span style="color:#15803d; font-weight:900;">{{ pin }}</span>
+                </div>
+
+                <div class="alert-box alert-good" style="margin-top:15px;">
+                    ✅ Give this Farmer ID and PIN to the farmer.
+                </div>
+
+                <div style="margin-top:15px; display:flex; gap:10px;">
+                    <a href="{% url 'lgu_create_farmer' %}" class="btn">
+                        + Create Another
+                    </a>
+
+                    <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">
+                        View Farmers
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,208 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Analytics</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+        <a href="{% url 'lgu_farms' %}" class="sidebar-link">
+            <i class="fas fa-tractor"></i> Farms
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class="sidebar-link">
+            <i class="fas fa-users"></i> Farmers
+        </a>
+
+        <a href="{% url 'lgu_analytics' %}" class="sidebar-link active">
+            <i class="fas fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="{% url 'lgu_logs' %}" class="sidebar-link">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
+
+        <div class="sidebar-section">Management</div>
+
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
+
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Analytics Overview</h2>
+                <p>System-wide farm and irrigation insights</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <!-- SUMMARY CARDS -->
+            <div class="summary-grid">
+
+                <div class="summary-card">
+                    <div class="summary-label">Total Farms</div>
+                    <div class="summary-value">{{ total_farms }}</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-label">Total Blocks</div>
+                    <div class="summary-value">{{ total_blocks }}</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-label">Active Pumps</div>
+                    <div class="summary-value">{{ active_pumps }}</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-label">Avg Moisture</div>
+                    <div class="summary-value">{{ avg_moisture }}%</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-label">Avg pH</div>
+                    <div class="summary-value">{{ avg_ph }}</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-label">Avg Temperature</div>
+                    <div class="summary-value">{{ avg_temp }}°C</div>
+                </div>
+
+            </div>
+
+            <!-- INSIGHTS PANEL -->
+            <div class="content-grid">
+
+                <div class="panel">
+                    <h3 class="section-title">
+                        <i class="fas fa-chart-pie"></i> System Insights
+                    </h3>
+
+                    <div class="mini-stat">
+                        <strong>Moisture Status</strong>
+                        <span>
+                            {% if avg_moisture < 35 %}
+                                Low (Needs Water)
+                            {% elif avg_moisture > 70 %}
+                                High (Too Wet)
+                            {% else %}
+                                Optimal
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="mini-stat">
+                        <strong>pH Condition</strong>
+                        <span>
+                            {% if avg_ph < 6 %}
+                                Acidic
+                            {% elif avg_ph > 7.5 %}
+                                Alkaline
+                            {% else %}
+                                Neutral
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="mini-stat">
+                        <strong>Temperature Range</strong>
+                        <span>
+                            {% if avg_temp < 20 %}
+                                Cool
+                            {% elif avg_temp > 35 %}
+                                Hot
+                            {% else %}
+                                Normal
+                            {% endif %}
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="panel">
+                    <h3 class="section-title">
+                        <i class="fas fa-lightbulb"></i> Recommendations
+                    </h3>
+
+                    <div class="mini-stat">
+                        <strong>Irrigation</strong>
+                        <span>
+                            {% if avg_moisture < 35 %}
+                                Increase watering
+                            {% elif avg_moisture > 70 %}
+                                Reduce watering
+                            {% else %}
+                                Maintain current level
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="mini-stat">
+                        <strong>Soil Condition</strong>
+                        <span>
+                            {% if avg_ph < 6 %}
+                                Add lime treatment
+                            {% elif avg_ph > 7.5 %}
+                                Add organic matter
+                            {% else %}
+                                Balanced soil
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="mini-stat">
+                        <strong>System Status</strong>
+                        <span>
+                            {% if active_pumps > 0 %}
+                                Active irrigation running
+                            {% else %}
+                                System idle
+                            {% endif %}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

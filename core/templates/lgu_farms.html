@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Farms</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+        <a href="{% url 'lgu_farms' %}" class="sidebar-link active">
+            <i class="fas fa-tractor"></i> Farms
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class="sidebar-link">
+            <i class="fas fa-users"></i> Farmers
+        </a>
+
+        <a href="{% url 'lgu_analytics' %}" class="sidebar-link">
+            <i class="fas fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="{% url 'lgu_logs' %}" class="sidebar-link">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
+
+
+        <div class="sidebar-section">Management</div>
+
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
+
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Farm Management</h2>
+                <p>All registered farms and assigned farmers</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <h3 class="section-title">
+                <i class="fas fa-tractor"></i> Farms Overview
+            </h3>
+<div class="panel">
+    <form method="GET" class="search-row">
+
+        <input type="text"
+               name="search"
+               placeholder="Search farm, farmer, location, or block..."
+               value="{{ search }}">
+
+        <select name="filter_by">
+            <option value="all">All</option>
+            <option value="name">Farm Name</option>
+            <option value="farmer">Farmer</option>
+            <option value="location">Location</option>
+            <option value="block">Block</option>
+        </select>
+
+        <button type="submit">Search</button>
+
+        <a href="{% url 'lgu_farms' %}" class="btn btn-secondary">Clear</a>
+
+    </form>
+</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Farm Name</th>
+                        <th>Farmer</th>
+                        <th>Location</th>
+                        <th>Total Blocks</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for farm in farms %}
+                    <tr>
+                        <td>{{ farm.name }}</td>
+
+                        <td>
+                            {% if farm.farmer %}
+                                {{ farm.farmer.farmer_profile.full_name }}
+                            {% else %}
+                                No Farmer
+                            {% endif %}
+                        </td>
+
+                        <td>{{ farm.location }}</td>
+
+                        <td>{{ farm.blocks.count }}</td>
+
+                        <td class="action-links">
+                            <a href="{% url 'lgu_farm_detail' farm.id %}" class="view">View</a>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No farms found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

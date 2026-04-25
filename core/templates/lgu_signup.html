@@ -1,0 +1,171 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HydroPulse | LGU Sign Up</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .login-wrapper {
+            display: flex;
+            height: 100vh;
+            align-items: center;
+            justify-content: center;
+            background: #f4f7f5;
+        }
+
+        .login-box {
+            width: 420px;
+            padding: 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .login-box input, .login-box select {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .password-field {
+            position: relative;
+        }
+
+        .toggle-eye {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .rules {
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .valid { color: green; }
+        .invalid { color: red; }
+
+        .status-box {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-wrapper">
+
+    <div class="login-box">
+
+        <h2>LGU Registration</h2>
+
+        <!-- ACCOUNT STATUS INFO -->
+        <div class="status-box">
+            ⚠️ Your account will be reviewed by the administrator before access is granted.
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <input type="text" name="username" placeholder="Username" required>
+
+            <input type="text" name="full_name" placeholder="Full Name" required>
+
+            <input type="text" name="office_name" placeholder="Office Name" required>
+
+            <input type="text" name="role" placeholder="Role in Office" required>
+
+            <select name="municipality" required>
+                <option value="">Select Municipality</option>
+                <option>Puerto Princesa</option>
+                <option>Aborlan</option>
+                <option>Narra</option>
+                <option>Roxas</option>
+                <option>Taytay</option>
+                <option>El Nido</option>
+            </select>
+
+            <!-- PASSWORD -->
+            <div class="password-field">
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <i class="fa fa-eye-slash toggle-eye" onclick="togglePassword('password', this)"></i>
+            </div>
+
+            <div class="password-field">
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+               <i class="fa fa-eye-slash toggle-eye" onclick="togglePassword('password', this)"></i>
+            </div>
+
+            <!-- PASSWORD RULES -->
+            <div class="rules">
+                <div id="rule-length" class="invalid">• At least 8 characters</div>
+                <div id="rule-upper" class="invalid">• Uppercase letter</div>
+                <div id="rule-lower" class="invalid">• Lowercase letter</div>
+                <div id="rule-number" class="invalid">• Number</div>
+            </div>
+
+            <button type="submit" style="width:100%;">Submit for Approval</button>
+        </form>
+
+        {% for message in messages %}
+            <p class="error">{{ message }}</p>
+        {% endfor %}
+
+        <p style="text-align:center; margin-top:10px;">
+            Already have an account?
+            <a href="{% url 'lgu_login' %}">Login</a>
+        </p>
+
+    </div>
+
+</div>
+
+<!-- SCRIPT -->
+<script>
+
+function togglePassword(inputId, icon) {
+    const field = document.getElementById(inputId);
+
+    if (field.type === "password") {
+        field.type = "text";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    } else {
+        field.type = "password";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    }
+}
+
+const password = document.getElementById("password");
+
+password.addEventListener("input", function() {
+    const value = password.value;
+
+    document.getElementById("rule-length").className =
+        value.length >= 8 ? "valid" : "invalid";
+
+    document.getElementById("rule-upper").className =
+        /[A-Z]/.test(value) ? "valid" : "invalid";
+
+    document.getElementById("rule-lower").className =
+        /[a-z]/.test(value) ? "valid" : "invalid";
+
+    document.getElementById("rule-number").className =
+        /[0-9]/.test(value) ? "valid" : "invalid";
+});
+
+
+</script>
+
+</body>
+</html>

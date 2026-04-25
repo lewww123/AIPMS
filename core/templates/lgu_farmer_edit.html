@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Farmer</title>
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="panel" style="max-width:600px;">
+        <h2>Edit Farmer</h2>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <label>Full Name</label>
+            <input type="text" name="full_name" value="{{ farmer.full_name }}" required>
+
+            <label>Contact Number</label>
+            <input type="text" name="contact_number" value="{{ farmer.contact_number }}">
+
+            <label>Address</label>
+            <textarea name="address">{{ farmer.address }}</textarea>
+
+            <button type="submit">Save Changes</button>
+            <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

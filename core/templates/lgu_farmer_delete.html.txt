@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Farmer</title>
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="panel" style="max-width:500px;">
+        <h2>Delete Farmer</h2>
+
+        <p>Are you sure you want to delete this farmer?</p>
+
+        <h3>{{ farmer.full_name }}</h3>
+        <p>Farmer ID: {{ farmer.farmer_id }}</p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <button type="submit" class="btn-danger">Yes, Delete</button>
+            <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

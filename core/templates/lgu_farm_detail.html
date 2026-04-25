@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Farm Detail</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .page-wrapper {
+            width: 100%;
+            padding: 2rem 3rem;
+        }
+
+        .topbar-clean {
+            margin-bottom: 1.5rem;
+        }
+
+        .farm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .analytics-row {
+            margin: 1.5rem 0;
+        }
+    </style>
+</head>
+
+<body style="background:#f4f7f5;">
+
+<div class="page-wrapper">
+
+    <!-- HEADER -->
+    <div class="farm-header">
+        <div>
+            <h2 style="margin:0;">{{ farm.name }}</h2>
+            <p style="color:#64748b; margin:5px 0 0;">
+                Farm Monitoring Details
+            </p>
+        </div>
+
+        <a href="{% url 'lgu_farms' %}" class="btn btn-secondary">
+            ← Back
+        </a>
+    </div>
+
+    <!-- FARM INFO -->
+    <div class="panel">
+
+        <h3 class="section-title">
+            <i class="fas fa-info-circle"></i> Farm Information
+        </h3>
+
+        <div class="content-grid">
+
+            <div class="mini-stat">
+                <strong>Location</strong>
+                <span>{{ farm.location }}</span>
+            </div>
+
+            <div class="mini-stat">
+                <strong>Farmer</strong>
+                <span>
+                    {% if farm.farmer %}
+                        {{ farm.farmer.farmer_profile.full_name }}
+                    {% else %}
+                        Not Assigned
+                    {% endif %}
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FARM ANALYTICS -->
+    <div class="analytics-row">
+
+        <div class="summary-grid">
+
+            <div class="summary-card">
+                <div class="summary-label">Avg Moisture</div>
+                <div class="summary-value">{{ avg_moisture }}%</div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">Avg pH</div>
+                <div class="summary-value">{{ avg_ph }}</div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">Avg Temp</div>
+                <div class="summary-value">{{ avg_temp }}°C</div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">Active Pumps</div>
+                <div class="summary-value">{{ active_pumps }}/{{ block_count }}</div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- BLOCKS -->
+    <div class="panel">
+
+        <h3 class="section-title">
+            <i class="fas fa-microchip"></i> Blocks / Sensors
+        </h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Block</th>
+                    <th>Moisture</th>
+                    <th>pH</th>
+                    <th>Temp</th>
+                    <th>Rain</th>
+                    <th>Pump</th>
+                    <th>Mode</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for block in blocks %}
+                <tr>
+                    <td>
+                        <a href="{% url 'lgu_block_detail' block.id %}" style="font-weight:700;">
+                            {{ block.name }}
+                        </a>
+                    </td>
+
+                    <td>{{ block.current_moisture }}%</td>
+                    <td>{{ block.current_ph }}</td>
+                    <td>{{ block.current_temp }}°C</td>
+
+                    <td>
+                        {% if block.is_raining %}
+                            <span class="badge badge-blue">Raining</span>
+                        {% else %}
+                            <span class="badge badge-green">Clear</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if block.pump_status %}
+                            <span class="badge badge-green">ON</span>
+                        {% else %}
+                            <span class="badge badge-red">OFF</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if block.mode == "manual" %}
+                            <span class="badge badge-blue">Manual</span>
+                        {% else %}
+                            <span class="badge badge-green">Auto</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if block.current_moisture < 35 %}
+                            <span class="badge badge-red">Needs Water</span>
+                        {% elif block.current_moisture > 70 %}
+                            <span class="badge badge-blue">Too Wet</span>
+                        {% else %}
+                            <span class="badge badge-green">Healthy</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="8">No blocks found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>

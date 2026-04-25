@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LGU Login</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f4f7f5;
+        }
+
+        .login-box {
+            width: 360px;
+            padding: 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .login-box input {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .error {
+            color: red;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+
+        .signup-link a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        #status_result {
+            text-align: center;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-wrapper">
+
+    <div class="login-box">
+
+        <h2>LGU Login</h2>
+
+        <!-- LOGIN -->
+        <form method="POST">
+            {% csrf_token %}
+
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <button type="submit" style="width:100%;">Login</button>
+        </form>
+
+        {% for message in messages %}
+            <p class="error">{{ message }}</p>
+        {% endfor %}
+
+        <!-- LINKS -->
+        <div class="signup-link">
+            No LGU account yet?
+            <a href="{% url 'lgu_signup' %}">Sign up here</a>
+        </div>
+
+        <div class="signup-link">
+            <a href="#" onclick="toggleStatus(event)">Check Account Status</a>
+        </div>
+
+        <!-- TOGGLE SECTION -->
+        <div id="statusSection" style="display:none; margin-top:12px;">
+
+            <input type="text" id="check_username" placeholder="Enter username">
+
+            <button type="button" onclick="checkStatus()" style="width:100%;">
+                Check Status
+            </button>
+
+            <p id="status_result"></p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function toggleStatus(e) {
+    e.preventDefault();
+
+    const section = document.getElementById("statusSection");
+
+    section.style.display = section.style.display === "none" ? "block" : "none";
+}
+
+function checkStatus() {
+    const username = document.getElementById("check_username").value.trim();
+    const result = document.getElementById("status_result");
+
+    if (!username) {
+        result.style.color = "red";
+        result.innerText = "Please enter a username.";
+        return;
+    }
+
+    fetch(`/check-lgu-status/?username=${encodeURIComponent(username)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "approved") {
+                result.style.color = "green";
+                result.innerText = "✔ Approved - You can log in";
+            } 
+            else if (data.status === "pending") {
+                result.style.color = "orange";
+                result.innerText = "⏳ Pending approval";
+            } 
+            else if (data.status === "rejected") {
+                result.style.color = "red";
+                result.innerText = "❌ Rejected - Contact admin";
+            } 
+            else {
+                result.style.color = "gray";
+                result.innerText = data.status;
+            }
+        });
+}
+</script>
+
+</body>
+</html>

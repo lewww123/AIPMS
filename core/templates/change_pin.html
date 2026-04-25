@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HydroPulse | Change PIN</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR (optional, you can remove if farmer side only) -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Farmer Panel</small>
+            </div>
+        </div>
+
+        <a href="{% url 'farmer_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+        <a href="{% url 'farmer_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Change PIN</h2>
+                <p>Update your secure access PIN</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <div class="panel" style="max-width:400px;">
+
+                <h3 class="section-title">
+                    <i class="fas fa-key"></i> Set New PIN
+                </h3>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <label>New 4-digit PIN</label>
+                    <input type="password"
+                           name="new_pin"
+                           placeholder="Enter new PIN"
+                           maxlength="4"
+                           pattern="[0-9]{4}"
+                           required>
+
+                    <button type="submit" style="width:100%; margin-top:10px;">
+                        Save PIN
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Smart Irrigation Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ================= MODERN VARIABLES ================= */
+        :root {
+            --primary: #10b981;
+            --primary-dark: #065f46;
+            --secondary: #3b82f6;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* ================= BASE ================= */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        /* ================= NAVBAR ================= */
+        .navbar {
+            background: white;
+            padding: 0 2rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 1.25rem; font-weight: 800; color: var(--primary-dark);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .nav-links { display: flex; gap: 10px; }
+        .nav-links a {
+            text-decoration: none; color: var(--text-muted);
+            font-weight: 500; padding: 8px 16px; border-radius: 8px;
+            transition: 0.2s; cursor: pointer;
+        }
+        .nav-links a:hover, .nav-links a.active-link { background: #ecfdf5; color: var(--primary); }
+
+        /* ================= MAIN CONTAINER ================= */
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+
+        .section-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 1.5rem;
+        }
+
+        h2 { font-size: 1.5rem; margin: 0; color: var(--text-main); }
+
+        /* ================= GRID & CARDS ================= */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card); padding: 1.5rem;
+            border-radius: 16px; box-shadow: var(--shadow);
+            border: 1px solid #e2e8f0; transition: transform 0.2s;
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 120px;
+        }
+
+        .card:hover { transform: translateY(-4px); }
+
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.75rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .card-header i { font-size: 1.1rem; color: var(--primary); }
+
+        .value { font-size: 2rem; font-weight: 700; color: var(--text-main); }
+        .sub-value { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* ================= PLANT ANIMATION ================= */
+        .plant-box {
+            background: var(--bg-card); border-radius: 16px; box-shadow: var(--shadow);
+            margin-bottom: 2rem; padding: 2rem; display: flex; align-items: center;
+            justify-content: center; flex-direction: column; border: 1px solid #e2e8f0;
+        }
+        
+        #plant-svg {
+            width: 160px; height: 160px;
+        }
+
+        #water-level {
+            transition: y 1.5s cubic-bezier(0.4, 0, 0.2, 1), height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #plant-status-text {
+            margin-top: 15px; font-weight: 700; text-transform: uppercase; 
+            font-size: 0.85rem; letter-spacing: 1px; color: var(--text-muted);
+            transition: color 0.5s ease;
+        }
+
+        /* ================= TIME SELECTOR ================= */
+        .time-selector {
+            background: #f1f5f9; padding: 4px; border-radius: 12px; display: flex; gap: 4px;
+        }
+
+        .time-btn {
+            border: none; background: none; padding: 6px 12px;
+            border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+            color: var(--text-muted); cursor: pointer; transition: 0.2s;
+            flex: 1;
+        }
+
+        .time-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* ================= STATUS INDICATORS ================= */
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
+        .bg-green { background: #d1fae5; color: #065f46; }
+        .bg-red { background: #fee2e2; color: #991b1b; }
+
+        /* ================= CONTROL BUTTONS ================= */
+        .control-group { display: flex; gap: 10px; margin-top: 10px; }
+        button.btn-action {
+            flex: 1; padding: 10px; border: none; border-radius: 10px;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-on { background: var(--primary); color: white; }
+        .btn-off { background: #f1f5f9; color: var(--text-main); border: 1px solid #e2e8f0; }
+
+        /* ================= TABLES & CHARTS ================= */
+        .chart-container {
+            background: white; padding: 1.5rem; border-radius: 16px;
+            box-shadow: var(--shadow); margin-top: 1.5rem; height: 450px;
+        }
+
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+        th { background: #f8fafc; text-align: left; padding: 16px; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 16px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); }
+
+        .section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .mode-switch {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    }
+
+    .mode-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+    color: #64748b;
+    }
+
+    .mode-btn:hover {
+    transform: translateY(-2px);
+    }
+
+    .mode-btn.active {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+    }
+
+</style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand"><i class="fas fa-leaf"></i> AIPMS</div>
+        <div class="nav-links">
+            <a onclick="showPage('home', this)" class="active-link">Dashboard</a>
+            <a onclick="showPage('analytics', this)">Analytics</a>
+            <a onclick="showPage('logs', this)">Logs</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div id="home" class="section active">
+            <div class="section-header"><h2>Real-time Overview</h2></div>
+            
+            <div class="plant-box">
+                <svg id="plant-svg" viewBox="0 0 100 100">
+                    <defs>
+                        <clipPath id="water-clip">
+                            <rect id="water-level" x="0" y="80" width="100" height="0" />
+                        </clipPath>
+                    </defs>
+                    
+                    <path class="pot" d="M30,80 L70,80 L65,95 L35,95 Z" fill="#78350f" />
+                    
+                    <g fill="#cbd5e1">
+                        <rect x="48" y="20" width="4" height="60" /> <path d="M50,45 Q20,30 15,55 Q40,65 50,45" /> <path d="M50,55 Q80,40 85,65 Q60,75 50,55" /> <path d="M50,30 Q50,0 70,10 Q60,25 50,30" /> </g>
+
+                    <g id="hydrated-plant" fill="#10b981" clip-path="url(#water-clip)">
+                        <rect x="48" y="20" width="4" height="60" /> <path d="M50,45 Q20,30 15,55 Q40,65 50,45" /> <path d="M50,55 Q80,40 85,65 Q60,75 50,55" /> <path d="M50,30 Q50,0 70,10 Q60,25 50,30" /> </g>
+                </svg>
+                <div id="plant-status-text">Status: Checking Moisture...</div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">SOIL MOISTURE <i class="fas fa-tint"></i></div>
+                    <div class="value" id="soil">--%</div>
+                    <div class="sub-value">Optimal Range: 40-70%</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">PUMP STATUS <i class="fas fa-cog"></i></div>
+                    <div>
+                        <div id="pumpBadge" class="badge bg-red">OFF</div>
+                        <div class="value" id="pump" style="font-size: 1.2rem; margin-top: 5px;">Standby</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">LAST WATERED <i class="fas fa-history"></i></div>
+                    <div class="value" id="lastWatered" style="font-size: 1.5rem;">--</div>
+                    <div class="sub-value" id="lastDuration">Duration: --</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">SYSTEM CONTROL <i class="fas fa-sliders-h"></i></div>
+                    <div class="mode-switch">
+                    <button id="manualBtn" class="mode-btn" onclick="setMode('manual')">
+                        <i class="fas fa-hand-paper"></i> MANUAL
+                    </button>
+
+                    <button id="autoBtn" class="mode-btn active" onclick="setMode('auto')">
+                        <i class="fas fa-cogs"></i> AUTO
+                    </button>
+                    </div>
+                    <div class="control-group">
+                        <button class="btn-action btn-on" onclick="setPump(true)"><i class="fas fa-play"></i> START</button>
+                        <button class="btn-action btn-off" onclick="setPump(false)"><i class="fas fa-stop"></i> STOP</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="analytics" class="section">
+            <div class="section-header">
+                <h2>Analytics Insights</h2>
+                <div class="time-selector">
+                    <button class="time-btn active" onclick="updateTimeframe('day', this)">Day</button>
+                    <button class="time-btn" onclick="updateTimeframe('week', this)">Week</button>
+                    <button class="time-btn" onclick="updateTimeframe('month', this)">Month</button>
+                    <button class="time-btn" onclick="updateTimeframe('year', this)">Year</button>
+                </div>
+            </div>
+            
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">WATERING CYCLES <i class="fas fa-redo"></i></div>
+                    <div class="value" id="cycleCount">0</div>
+                    <div id="cycleSub" class="sub-value">Active cycles today</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">VOLUME USED <i class="fas fa-database"></i></div>
+                    <div class="value" id="usageVal">0.000 m³</div>
+                    <div id="usageLabel" class="sub-value">Total for today</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">AVG MOISTURE <i class="fas fa-chart-area"></i></div>
+                    <div class="value" id="avgMoisture">0%</div>
+                    <div class="sub-value">Soil hydration mean</div>
+                </div>
+                <div class="card" style="border-top: 4px solid var(--primary);">
+                    <div class="card-header" id="insightHeader">PEAK DRYNESS <i class="fas fa-sun"></i></div>
+                    <div class="value" id="insightVal">--:--</div>
+                    <div class="sub-value" id="insightLabel">Lowest moisture detected</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+
+        <div id="logs" class="section">
+            <div class="section-header"><h2>Activity History</h2></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th><i class="far fa-clock"></i> Timestamp</th>
+                        <th>Event Type</th>
+                        <th>Consumption</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="logTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    let chart;
+    let currentRange = 'day';
+
+    function showPage(page, element) {
+        document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+        document.querySelectorAll(".nav-links a").forEach(a => a.classList.remove("active-link"));
+        document.getElementById(page).classList.add("active");
+        element.classList.add("active-link");
+        if(page === 'analytics') setTimeout(loadChart, 100);
+    }
+
+    function animatePlantFill(moisture) {
+        const m = Math.max(0, Math.min(100, moisture));
+        const waterLevelRect = document.getElementById("water-level");
+        const statusText = document.getElementById("plant-status-text");
+        const hydratedPlant = document.getElementById("hydrated-plant");
+
+        const maxFillHeight = 70; 
+        const baseY = 80; 
+        
+        const fillHeight = (m / 100) * maxFillHeight;
+        const newY = baseY - fillHeight;
+        
+        waterLevelRect.setAttribute("y", newY);
+        waterLevelRect.setAttribute("height", fillHeight);
+
+        if (m <= 30) {
+            statusText.innerText = "Status: Thirsty!";
+            statusText.style.color = "#d97706";
+            hydratedPlant.setAttribute("fill", "#eab308");
+        } else if (m > 70) {
+            statusText.innerText = "Status: Fully Saturated!";
+            statusText.style.color = "#0891b2";
+            hydratedPlant.setAttribute("fill", "#0891b2");
+        } else {
+            statusText.innerText = "Status: Healthy & Optimal";
+            statusText.style.color = "#10b981";
+            hydratedPlant.setAttribute("fill", "#10b981");
+        }
+    }
+
+    function updateTimeframe(range, btn) {
+        document.querySelectorAll(".time-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentRange = range;
+        document.getElementById("usageLabel").innerText = `Total for this ${range}`;
+        document.getElementById("cycleSub").innerText = `Active cycles this ${range}`;
+        loadChart();
+    }
+
+    function fetchLatest() {
+        fetch('/api/latest/')
+        .then(res => res.json())
+        .then(data => {
+            const currentMoisture = data.soil ?? 0;
+            document.getElementById("soil").innerText = currentMoisture + "%";
+            animatePlantFill(currentMoisture);
+
+            const pBadge = document.getElementById("pumpBadge");
+            const pText = document.getElementById("pump");
+            if (data.pump) {
+                pBadge.innerText = "ACTIVE"; pBadge.className = "badge bg-green";
+                pText.innerText = "Irrigating...";
+            } else {
+                pBadge.innerText = "OFF"; pBadge.className = "badge bg-red";
+                pText.innerText = "Standby";
+            }
+        }).catch(err => console.log("Waiting for API..."));
+    }
+
+   function setPump(status) {
+    fetch('/api/control/', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: status })
+    })
+    .then(() => {
+        const pBadge = document.getElementById("pumpBadge");
+        const pText = document.getElementById("pump");
+
+        if (status) {
+            pBadge.innerText = "ACTIVE";
+            pBadge.className = "badge bg-green";
+            pText.innerText = "Irrigating...";
+        } else {
+            pBadge.innerText = "OFF";
+            pBadge.className = "badge bg-red";
+            pText.innerText = "Standby";
+        }
+    });
+}
+
+    function fetchLast() {
+        fetch('/api/last-watered/') // Ensure this matches your urls.py
+        .then(response => response.json())
+        .then(data => {
+        // Map "last_watered_time" to the "lastWatered" div
+            const timeElement = document.getElementById('lastWatered');
+            const durationElement = document.getElementById('lastDuration');
+
+            if (data.last_watered_time && data.last_watered_time !== "No data") {
+                timeElement.innerText = data.last_watered_time;
+                // Display the volume in the sub-value area
+                durationElement.innerText = "Volume: " + data.amount_m3 + " m³";
+            } else {
+                timeElement.innerText = "--";
+                durationElement.innerText = "No history yet";
+            }
+    })
+    .catch(err => console.error("Error fetching last watered:", err));
+}
+
+    function fetchLogs() {
+        fetch('/api/water-logs/')
+        .then(res => res.json())
+        .then(data => {
+            let table = document.getElementById("logTable");
+            table.innerHTML = "";
+            data.logs.forEach(log => {
+                table.innerHTML += `<tr>
+                    <td>${new Date(log.time).toLocaleString()}</td>
+                    <td>${log.type || 'Irrigation Cycle'}</td>
+                    <td>${log.volume || '0'}L</td>
+                    <td><span class="badge bg-green">Success</span></td>
+                </tr>`;
+            });
+        });
+    }
+
+    function loadChart() {
+        fetch(`/api/soil-history/?range=${currentRange}`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("cycleCount").innerText = data.summary.cycles;
+            document.getElementById("usageVal").innerText = data.summary.total_usage_m3.toFixed(3) + " m³";
+            document.getElementById("avgMoisture").innerText = data.summary.avg_moisture + "%";
+
+            const insightHeader = document.getElementById("insightHeader");
+            const insightVal = document.getElementById("insightVal");
+            const insightLabel = document.getElementById("insightLabel");
+
+            if(currentRange === 'day') {
+                insightHeader.innerHTML = 'PEAK DRYNESS <i class="fas fa-sun"></i>';
+                insightVal.innerText = data.summary.peak_dryness_time;
+                insightLabel.innerText = "Time of lowest moisture";
+            } else {
+                insightHeader.innerHTML = 'PEAK USAGE <i class="fas fa-droplet"></i>';
+                insightVal.innerText = data.summary.peak_usage_period;
+                insightLabel.innerText = `Busiest period this ${currentRange}`;
+            }
+
+            const ctx = document.getElementById("chart").getContext('2d');
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'Moisture (%)',
+                            data: data.values,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'yMoisture',
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Volume (m³)',
+                            data: data.volume_values,
+                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                            borderRadius: 4,
+                            yAxisID: 'yVolume',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        yMoisture: {
+                            type: 'linear', position: 'left',
+                            beginAtZero: true, max: 100,
+                            title: { display: true, text: 'Moisture %' }
+                        },
+                        yVolume: {
+                            type: 'linear', position: 'right',
+                            beginAtZero: true, grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'Volume m³' }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        });
+    }
+
+    function refresh() {
+        fetchLatest(); fetchLast();
+        if (document.getElementById('logs').classList.contains('active')) fetchLogs();
+    }
+
+    // New Function for Mode Switching
+ function setMode(mode) {
+    fetch("/api/set-mode/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ mode: mode })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        // 🔥 UI STATE UPDATE
+        document.getElementById("manualBtn").classList.remove("active");
+        document.getElementById("autoBtn").classList.remove("active");
+
+        if (mode === "manual") {
+            document.getElementById("manualBtn").classList.add("active");
+        } else {
+            document.getElementById("autoBtn").classList.add("active");
+        }
+
+        console.log("Mode:", data.mode);
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Failed to change mode");
+    });
+}
+
+    animatePlantFill(0);
+    setInterval(refresh, 5000);
+    refresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS| Logs</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+        <a href="{% url 'lgu_farms' %}" class="sidebar-link">
+            <i class="fas fa-tractor"></i> Farms
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class="sidebar-link">
+            <i class="fas fa-users"></i> Farmers
+        </a>
+
+        <a href="{% url 'lgu_analytics' %}" class="sidebar-link">
+            <i class="fas fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="{% url 'lgu_logs' %}" class="sidebar-link active">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
+
+        <div class="sidebar-section">Management</div>
+
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
+
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>System Logs</h2>
+                <p>Recent irrigation and system activity</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <div class="panel">
+
+                <h3 class="section-title">
+                    <i class="fas fa-clipboard-list"></i> Activity Logs
+                </h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Farm</th>
+                            <th>Block</th>
+                            <th>Farmer</th>
+                            <th>Water Used</th>
+                            <th>Moisture</th>
+                            <th>Mode</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.timestamp|date:"M d, H:i" }}</td>
+
+                            <td>{{ log.block.farm.name }}</td>
+
+                            <td>{{ log.block.name }}</td>
+
+                            <td>
+                                {% if log.block.farm.farmer %}
+                                    {{ log.block.farm.farmer.farmer_profile.full_name }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+
+                            <td>{{ log.amount }} m³</td>
+
+                            <td>{{ log.moisture_at_time }}%</td>
+
+                            <td>
+                                {% if log.mode == "manual" %}
+                                    <span class="badge badge-blue">Manual</span>
+                                {% else %}
+                                    <span class="badge badge-green">Auto</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if log.note %}
+                                    {{ log.note }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="8">No logs available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

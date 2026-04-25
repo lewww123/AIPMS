@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Farmer Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #065f46;
+            --secondary: #3b82f6;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .navbar {
+            background: white;
+            padding: 0 2rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-links > span {
+            color: var(--primary);
+            background: #ecfdf5;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+
+        .notification-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .notification-wrapper:hover i {
+            color: var(--primary) !important;
+        }
+
+        .notification-wrapper:active {
+            transform: scale(0.9);
+        }
+
+        #notif-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 2px solid white;
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        #notif-dropdown {
+            display: none;
+            position: absolute;
+            top: 45px;
+            right: 0;
+            width: 280px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            padding: 15px;
+            z-index: 1001;
+        }
+
+        .notif-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        #notification-container {
+            position: fixed;
+            top: 85px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+            animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-left: 6px solid rgba(0,0,0,0.2);
+        }
+
+        @keyframes toastIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast-blue { background: #3b82f6; }
+        .toast-red { background: #ef4444; }
+        .toast-green { background: #10b981; }
+
+        .dashboard-layout {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 1.5rem 1rem;
+            position: sticky;
+            top: 70px;
+            height: calc(100vh - 70px);
+            box-sizing: border-box;
+        }
+
+        .sidebar-user {
+            background: #ecfdf5;
+            border-radius: 14px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-dark);
+            font-weight: 800;
+        }
+
+        .sidebar-user small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 3px;
+        }
+
+        .sidebar-title {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .block-link {
+    width: 100%;
+    padding: 14px 14px;
+    margin-bottom: 10px;
+    border-radius: 14px;
+    text-align: left;
+    font-weight: 700;
+    cursor: pointer;
+    background: #f1f5f9;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    box-sizing: border-box;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.block-link i {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.block-link:hover {
+    background: #ecfdf5;
+    color: var(--primary-dark);
+    transform: translateX(4px);
+    border-color: #bbf7d0;
+}
+
+.block-link.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 8px 18px rgba(16, 185, 129, 0.25);
+}
+
+.block-link.active i {
+    color: white;
+}
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 130px;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .sub-value {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .plant-box {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border: 1px solid #e2e8f0;
+        }
+
+        #plant-svg {
+            width: 160px;
+            height: 160px;
+        }
+
+        #water-level {
+            transition: y 1.5s ease, height 1.5s ease;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .bg-green { background: #d1fae5; color: #065f46; }
+        .bg-red { background: #fee2e2; color: #991b1b; }
+        .bg-blue { background: #dbeafe; color: #1e40af; }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .mode-btn.active {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            background: #f1f5f9;
+            color: var(--text-main);
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-on.active {
+            background-color: #10b981 !important;
+            color: white !important;
+            border-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-off.active {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                top: 0;
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="notification-container"></div>
+
+    <nav class="navbar">
+        <div class="brand"><i class="fas fa-leaf"></i> AIPMS</div>
+
+        <div class="nav-links">
+            <div class="notification-wrapper" id="notif-trigger">
+                <i class="fas fa-bell" style="font-size: 1.4rem; color: var(--text-muted);"></i>
+                <span id="notif-badge" style="display: none;"></span>
+
+                <div id="notif-dropdown">
+                    <div style="font-size: 0.8rem; font-weight: 800; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                        ALERTS <span style="color: var(--primary); cursor: pointer;" onclick="clearNotifs()">Clear</span>
+                    </div>
+                    <div id="notif-list" style="max-height: 200px; overflow-y: auto;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 10px;">No new alerts.</div>
+                    </div>
+                </div>
+            </div>
+
+            <span>{{ request.user.username }}</span>
+            <a href="{% url 'farmer_logout' %}" 
+   style="background:#fee2e2; color:#991b1b; padding:8px 14px; border-radius:8px; text-decoration:none; font-weight:700;">
+    Logout
+</a>    
+        </div>
+    </nav>
+
+    <div class="dashboard-layout">
+
+      <aside class="sidebar">
+    <div class="sidebar-user">
+        <i class="fas fa-user-circle"></i>
+        {{ user_obj.username }}
+        <small>Farmer Account</small>
+    </div>
+
+    <div class="sidebar-title">Farm Blocks</div>
+
+    {% for farm in farms %}
+        <div style="font-size: 0.75rem; font-weight: 800; color: var(--text-muted); margin: 1rem 0 0.5rem;">
+            {{ farm.name }}
+        </div>
+
+        {% for block in farm.blocks.all %}
+            <a href="?block={{ block.id }}"
+               class="block-link {% if selected_block and selected_block.id == block.id %}active{% endif %}">
+                <i class="fas fa-seedling"></i>
+                {{ block.name }}
+            </a>
+        {% empty %}
+            <p style="font-size: 0.8rem; color: var(--text-muted);">No blocks found.</p>
+        {% endfor %}
+    {% empty %}
+        <p style="font-size: 0.8rem; color: var(--text-muted);">No farms found.</p>
+    {% endfor %}
+</aside>
+
+        <main class="main-content">
+            <div class="container">
+
+                <div class="brand" style="margin-bottom: 1.5rem;">
+                    REAL-TIME PLANT MONITORING <i class="fas fa-tint"></i>
+                </div>
+
+                <div class="plant-box">
+                    <svg id="plant-svg" viewBox="0 0 100 100">
+                        <defs>
+                            <clipPath id="water-clip">
+                                <rect id="water-level" x="0" y="80" width="100" height="0" />
+                            </clipPath>
+                        </defs>
+
+                        <path d="M30,80 L70,80 L65,95 L35,95 Z" fill="#78350f" />
+
+                        <g fill="#cbd5e1">
+                            <rect x="48" y="20" width="4" height="60" />
+                            <path d="M50,45 Q20,30 15,55 Q40,65 50,45" />
+                            <path d="M50,55 Q80,40 85,65 Q60,75 50,55" />
+                            <path d="M50,30 Q50,0 70,10 Q60,25 50,30" />
+                        </g>
+
+                        <g id="hydrated-plant" fill="#10b981" clip-path="url(#water-clip)">
+                            <rect x="48" y="20" width="4" height="60" />
+                            <path d="M50,45 Q20,30 15,55 Q40,65 50,45" />
+                            <path d="M50,55 Q80,40 85,65 Q60,75 50,55" />
+                            <path d="M50,30 Q50,0 70,10 Q60,25 50,30" />
+                        </g>
+                    </svg>
+
+                    <div id="plant-status-text">Status: Checking...</div>
+                </div>
+
+                <div class="grid">
+                    <div class="card">
+                        <div class="card-header">SOIL MOISTURE <i class="fas fa-tint"></i></div>
+                        <div class="value" id="soil">--%</div>
+                        <div class="sub-value">Optimal: 40-70%</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">WEATHER <i class="fas fa-cloud-showers-heavy" style="color:var(--secondary)"></i></div>
+                        <div>
+                            <div id="rainBadge" class="badge">Checking...</div>
+                            <div class="value" id="rainText" style="font-size: 1.2rem;">--</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">TEMPERATURE <i class="fas fa-thermometer-half" style="color:#f97316"></i></div>
+                        <div class="value" id="temp">--°C</div>
+                        <div class="sub-value">Soil Temperature</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">SOIL PH <i class="fas fa-flask" style="color:#8b5cf6"></i></div>
+                        <div class="value" id="ph">--</div>
+                        <div id="phStatus" class="sub-value">Checking...</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">PUMP STATUS <i class="fas fa-cog"></i></div>
+                        <div>
+                            <div id="pumpBadge" class="badge bg-red">OFF</div>
+                            <div class="value" id="pump" style="font-size: 1.2rem;">Standby</div>
+                            <div class="sub-value"><i class="fas fa-history"></i> Last: {{ last_watered }}</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">SYSTEM CONTROL <i class="fas fa-sliders-h"></i></div>
+
+                        <div style="display:flex; gap:5px; margin-top:10px;">
+                            <button id="manualBtn" class="mode-btn" onclick="sendCommand('toggle_mode')">MANUAL</button>
+                            <button id="autoBtn" class="mode-btn active" onclick="sendCommand('toggle_mode')">AUTO</button>
+                        </div>
+
+                        <div style="display:flex; gap:5px; margin-top:5px;">
+                            <button id="startBtn" class="btn-action btn-on" onclick="sendCommand('toggle_pump')">START</button>
+                            <button id="stopBtn" class="btn-action btn-off" onclick="sendCommand('toggle_pump')">STOP</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 2rem; min-height: auto; width: 100%; overflow: hidden;">
+                    <div class="card-header" style="margin-bottom: 1rem;">
+                        WATERING HISTORY & LOGS <i class="fas fa-history"></i>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #f1f5f9; color: var(--text-muted);">
+                                    <th style="padding: 12px;">TIME & DATE</th>
+                                    <th style="padding: 12px;">MOISTURE</th>
+                                    <th style="padding: 12px;">MODE</th>
+                                    <th style="padding: 12px;">STATUS / NOTES</th>
+                                    <th style="padding: 12px;">VOLUME</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="water-log-body">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                                        Fetching latest logs...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+<script>
+    const csrfToken = '{{ csrf_token }}';
+
+    const notifTrigger = document.getElementById('notif-trigger');
+    const notifDropdown = document.getElementById('notif-dropdown');
+    const notifBadge = document.getElementById('notif-badge');
+    const notifList = document.getElementById('notif-list');
+
+    notifTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = notifDropdown.style.display === 'block';
+        notifDropdown.style.display = isOpen ? 'none' : 'block';
+        notifBadge.style.display = 'none';
+    });
+
+    window.addEventListener('click', () => notifDropdown.style.display = 'none');
+
+    function clearNotifs() {
+        notifList.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 10px;">No new alerts.</div>';
+    }
+
+    function showToast(message, type = 'blue') {
+        const container = document.getElementById('notification-container');
+
+        notifBadge.style.display = 'block';
+
+        if (notifList.innerText.includes("No new alerts")) notifList.innerHTML = "";
+
+        const item = document.createElement('div');
+        item.className = 'notif-item';
+        item.innerHTML = `<strong>•</strong> ${message}`;
+        notifList.prepend(item);
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        let icon = type === 'red' ? 'fa-exclamation-triangle' : (type === 'green' ? 'fa-check-circle' : 'fa-info-circle');
+
+        toast.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 500);
+        }, 5000);
+    }
+
+    const notifySocket = new WebSocket(
+        (window.location.protocol === 'https:' ? 'wss://' : 'ws://')
+        + window.location.host + '/ws/notifications/'
+    );
+
+    notifySocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        console.log("WebSocket Data Received:", data);
+        showToast(data.message, data.type);
+        fetchLatest();
+    };
+
+    function animatePlantFill(moisture) {
+        const m = Math.max(0, Math.min(100, moisture));
+        const waterLevelRect = document.getElementById("water-level");
+        const statusText = document.getElementById("plant-status-text");
+        const hydratedPlant = document.getElementById("hydrated-plant");
+
+        const fillHeight = (m / 100) * 70;
+        waterLevelRect.setAttribute("y", 80 - fillHeight);
+        waterLevelRect.setAttribute("height", fillHeight);
+
+        if (m <= 30) {
+            statusText.innerText = "Status: Thirsty!";
+            statusText.style.color = "#d97706";
+            hydratedPlant.setAttribute("fill", "#eab308");
+        } else if (m > 70) {
+            statusText.innerText = "Status: Saturated!";
+            statusText.style.color = "#0891b2";
+            hydratedPlant.setAttribute("fill", "#0891b2");
+        } else {
+            statusText.innerText = "Status: Healthy";
+            statusText.style.color = "#10b981";
+            hydratedPlant.setAttribute("fill", "#10b981");
+        }
+    }
+
+    function fetchLatest() {
+        fetch('/api/live-data/?block={{ selected_block.id }}')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("soil").innerText = (data.soil ?? 0) + "%";
+            animatePlantFill(data.soil ?? 0);
+
+            document.getElementById("temp").innerText = (data.temp ?? 0).toFixed(1) + "°C";
+            document.getElementById("ph").innerText = (data.ph ?? 7.0).toFixed(1);
+
+            const phStat = document.getElementById("phStatus");
+
+            if(data.ph < 6) phStat.innerText = "Acidic";
+            else if(data.ph > 7.5) phStat.innerText = "Alkaline";
+            else phStat.innerText = "Ideal";
+
+            const rBadge = document.getElementById("rainBadge");
+
+            rBadge.innerText = data.rain ? "RAINING" : "CLEAR";
+            rBadge.className = data.rain ? "badge bg-blue" : "badge bg-green";
+
+            document.getElementById("rainText").innerText = data.rain ? "Rain Detected" : "No Rain";
+
+            const pBadge = document.getElementById("pumpBadge");
+
+            pBadge.innerText = data.pump ? "ACTIVE" : "OFF";
+            pBadge.className = data.pump ? "badge bg-green" : "badge bg-red";
+
+            document.getElementById("pump").innerText = data.pump ? "Irrigating..." : "Standby";
+
+            const startBtn = document.getElementById("startBtn");
+            const stopBtn = document.getElementById("stopBtn");
+
+            if (data.mode === 'manual') {
+                document.getElementById('manualBtn').classList.add('active');
+                document.getElementById('autoBtn').classList.remove('active');
+
+                startBtn.disabled = false;
+                stopBtn.disabled = false;
+
+                if (data.pump) {
+                    startBtn.classList.add('active');
+                    stopBtn.classList.remove('active');
+                } else {
+                    startBtn.classList.remove('active');
+                    stopBtn.classList.add('active');
+                }
+            } else {
+                document.getElementById('autoBtn').classList.add('active');
+                document.getElementById('manualBtn').classList.remove('active');
+
+                startBtn.disabled = true;
+                stopBtn.disabled = true;
+
+                startBtn.classList.remove('active');
+                stopBtn.classList.remove('active');
+            }
+        });
+    }
+
+    function sendCommand(actionType) {
+    fetch('/api/control-pump/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            action: actionType,
+            block_id: "{{ selected_block.id }}"
+        })
+    }).then(() => fetchLatest());
+}
+
+    fetchLatest();
+    setInterval(fetchLatest, 10000);
+</script>
+
+</body>
+</html>

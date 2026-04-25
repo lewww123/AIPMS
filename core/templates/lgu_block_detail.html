@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS| Block Analytics</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .page-wrapper {
+            padding: 2rem 3rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+
+<body style="background:#f4f7f5;">
+
+<div class="page-wrapper">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div>
+            <h2>{{ block.name }}</h2>
+            <p style="color:#64748b;">
+                {{ block.farm.name }} - Block Analytics
+            </p>
+        </div>
+
+        <a href="{% url 'lgu_farm_detail' block.farm.id %}" class="btn btn-secondary">
+            ← Back
+        </a>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="summary-grid">
+
+        <div class="summary-card">
+            <div class="summary-label">Moisture</div>
+            <div class="summary-value">{{ block.current_moisture }}%</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">pH</div>
+            <div class="summary-value">{{ block.current_ph }}</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">Temperature</div>
+            <div class="summary-value">{{ block.current_temp }}°C</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">Pump</div>
+            <div class="summary-value">
+                {% if block.pump_status %}ON{% else %}OFF{% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="content-grid" style="margin-top:1.5rem;">
+
+        <div class="panel">
+            <h3 class="section-title">
+                <i class="fas fa-chart-pie"></i> Insights
+            </h3>
+
+            <div class="mini-stat">
+                <strong>Moisture Status</strong>
+                <span>{{ moisture_status }}</span>
+            </div>
+
+            <div class="mini-stat">
+                <strong>pH Status</strong>
+                <span>{{ ph_status }}</span>
+            </div>
+
+            <div class="mini-stat">
+                <strong>Temperature</strong>
+                <span>{{ temp_status }}</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3 class="section-title">
+                <i class="fas fa-lightbulb"></i> Recommendation
+            </h3>
+
+            <div class="mini-stat">
+                <strong>Irrigation</strong>
+                <span>
+                    {% if block.current_moisture < 35 %}
+                        Increase watering
+                    {% elif block.current_moisture > 70 %}
+                        Reduce watering
+                    {% else %}
+                        Maintain level
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="mini-stat">
+                <strong>Soil Treatment</strong>
+                <span>
+                    {% if block.current_ph < 6 %}
+                        Add lime
+                    {% elif block.current_ph > 7.5 %}
+                        Add organic matter
+                    {% else %}
+                        Balanced soil
+                    {% endif %}
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
