@@ -1,3 +1,5 @@
+<link rel="manifest" href="{% static 'manifest.json' %}">
+<meta name="theme-color" content="#15803d">
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -362,6 +364,7 @@
                     <div class="summary-label">Registered Farmers</div>
                     <div class="summary-value">{{ farmers|length }}</div>
                 </div>
+
                 <div class="summary-card">
                     <div class="summary-label">System Status</div>
                     <div class="summary-value" style="color:#15803d;">Operational</div>
