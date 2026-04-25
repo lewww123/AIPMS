@@ -29,6 +29,7 @@ REDUCED_VOLUME_LITERS = 0.5  # Top-up amount during rain
 MOISTURE_CRITICAL = 25  # Below this, water even if raining
 MOISTURE_OK = 50        # Above this, skip if raining
 
+
 def farmer_entry(request):
     if request.user.is_authenticated:
         if request.user.groups.filter(name="Farmers").exists():

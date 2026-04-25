@@ -1,30 +1,26 @@
 from functools import wraps
 from django.shortcuts import redirect
 
+
 def lgu_required(view_func):
     def wrapper(request, *args, **kwargs):
-
         if not request.user.is_authenticated:
-            return redirect("lgu_login")  # ✔ correct
-
-        if not request.user.groups.filter(name="LGU").exists():
-            return redirect("farmer_login")
-
+            return redirect("/lgu-login/")
+        
+        if not hasattr(request.user, "lgu_profile"):
+            return redirect("/farmer-login/")
+        
         return view_func(request, *args, **kwargs)
-
     return wrapper
 
 
 def farmer_required(view_func):
-    @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-
         if not request.user.is_authenticated:
-            return redirect("farmer_login")
-
-        if not request.user.groups.filter(name="Farmers").exists():
-            return redirect("lgu_login")
-
+            return redirect("/farmer-login/")
+        
+        if not hasattr(request.user, 'farmer_profile'):
+            return redirect("/lgu-login/")
+        
         return view_func(request, *args, **kwargs)
-
     return wrapper
