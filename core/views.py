@@ -10,7 +10,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import User, Group
-from .models import SensorData, PumpControl, WaterLog, IrrigationSettings, Farm, Block, FarmerProfile, LGUProfile
+from .models import SensorData, PumpControl, WaterLog, IrrigationSettings, Farm, Block, FarmerProfile, LGUProfile, MicrocontrollerDevice
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from functools import wraps
@@ -356,10 +356,22 @@ def receive_data(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            block_id = data.get("block_id")  # <-- from Arduino
-            block = Block.objects.get(id=block_id)
 
-                # 1. Create record with ALL sensors
+            # 🔥 GET DEVICE
+            hardware_id = data.get("hardware_id")
+
+            if not hardware_id:
+                return JsonResponse({"error": "Missing hardware_id"}, status=400)
+
+            device = MicrocontrollerDevice.objects.select_related("block").get(
+                hardware_id=hardware_id,
+                is_active=True
+            )
+
+            block = device.block
+            device.save()  # update last_seen if you want
+
+            # 🔥 SAVE SENSOR DATA
             SensorData.objects.create(
                 block=block,
                 soil_moisture=int(data.get("soil", 0)),
@@ -370,16 +382,20 @@ def receive_data(request):
                 mode=str(data.get("mode", "auto"))
             )
 
-            # 2. Run logic based on fresh data
+            # 🔥 RUN CONTROL LOGIC
             auto_control_logic()
-            
-            # 3. Get updated state
-            control = PumpControl.objects.get(id=1)
+
+            # 🔥 GET CONTROL FOR THIS BLOCK
+            control, _ = PumpControl.objects.get_or_create(block=block)
 
             return JsonResponse({
                 "status": control.status,
                 "mode": control.mode
             })
+
+        except MicrocontrollerDevice.DoesNotExist:
+            return JsonResponse({"error": "Device not registered"}, status=400)
+
         except Exception as e:
             print(f"SERVER ERROR: {e}")
             return JsonResponse({"error": str(e)}, status=400)

@@ -112,3 +112,14 @@ class LGUProfile(models.Model):
 
     def __str__(self):
         return f"{self.office_name} - {self.status}"
+    
+class MicrocontrollerDevice(models.Model):
+    hardware_id = models.CharField(max_length=50, unique=True)
+    block = models.OneToOneField(Block, on_delete=models.CASCADE, related_name="device")
+
+    device_name = models.CharField(max_length=100, default="Arduino Node")
+    is_active = models.BooleanField(default=True)
+    last_seen = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.hardware_id} - {self.block.name}"
