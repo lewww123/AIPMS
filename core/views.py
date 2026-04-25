@@ -10,7 +10,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import User, Group
-from .models import SensorData, PumpControl, WaterLog, IrrigationSettings, Farm, Block, FarmerProfile, LGUProfile, MicrocontrollerDevice
+from .models import SensorData, PumpControl, WaterLog, Farm, Block, FarmerProfile, LGUProfile, MicrocontrollerDevice
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from functools import wraps

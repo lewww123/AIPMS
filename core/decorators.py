@@ -13,7 +13,6 @@ def lgu_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return wrapper
-    return wrapper
 
 
 def farmer_required(view_func):

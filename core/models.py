@@ -2,15 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 
-class IrrigationSettings(models.Model):
-    dry_level = models.IntegerField(default=30)
-    wet_level = models.IntegerField(default=70)
-    auto_mode = models.BooleanField(default=True)
-    manual_mode = models.BooleanField(default=False)
-
-    # Note: With the new time-based logic, these levels act more as 
-    # safety thresholds rather than the primary trigger.
-
 class Farm(models.Model):
     name = models.CharField(max_length=100, default="My Farm")
     location = models.CharField(max_length=200, default="Puerto Princesa City")
