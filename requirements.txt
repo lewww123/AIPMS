@@ -1,0 +1,6 @@
+Django 
+requests	
+daphne
+channels
+random
+auth
