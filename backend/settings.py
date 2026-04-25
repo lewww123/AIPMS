@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [
     "192.168.1.11",
     "*",
     ".onrender.com",
+    "aipms-n38i.onrender.com",
 ]
 
 
@@ -149,3 +150,7 @@ LOGOUT_REDIRECT_URL = '/farmer-login/'
 LOGIN_URL = "/lgu-login/"
 LOGIN_REDIRECT_URL = "/lgu/"
 LOGOUT_REDIRECT_URL = "/lgu-login/"
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://aipms-n38i.onrender.com",
+]
