@@ -1,12 +1,14 @@
 {% load static %}
-<link rel="manifest" href="{% static 'manifest.json' %}">
-<meta name="theme-color" content="#15803d">
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>AIPMS | Farmer Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#15803d">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -65,6 +67,15 @@
             font-weight: 600;
             padding: 8px 16px;
             border-radius: 8px;
+        }
+
+        .logout-btn {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 8px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
         }
 
         .notification-wrapper {
@@ -168,6 +179,7 @@
             top: 70px;
             height: calc(100vh - 70px);
             box-sizing: border-box;
+            overflow-y: auto;
         }
 
         .sidebar-user {
@@ -194,47 +206,54 @@
             text-transform: uppercase;
         }
 
+        .farm-sidebar-title {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            margin: 1rem 0 0.5rem;
+        }
+
         .block-link {
-    width: 100%;
-    padding: 14px 14px;
-    margin-bottom: 10px;
-    border-radius: 14px;
-    text-align: left;
-    font-weight: 700;
-    cursor: pointer;
-    background: #f1f5f9;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    box-sizing: border-box;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
-}
+            width: 100%;
+            padding: 14px 14px;
+            margin-bottom: 10px;
+            border-radius: 14px;
+            text-align: left;
+            font-weight: 700;
+            cursor: pointer;
+            background: #f1f5f9;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            box-sizing: border-box;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
 
-.block-link i {
-    color: var(--primary);
-    font-size: 1rem;
-}
+        .block-link i {
+            color: var(--primary);
+            font-size: 1rem;
+        }
 
-.block-link:hover {
-    background: #ecfdf5;
-    color: var(--primary-dark);
-    transform: translateX(4px);
-    border-color: #bbf7d0;
-}
+        .block-link:hover {
+            background: #ecfdf5;
+            color: var(--primary-dark);
+            transform: translateX(4px);
+            border-color: #bbf7d0;
+        }
 
-.block-link.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-    box-shadow: 0 8px 18px rgba(16, 185, 129, 0.25);
-}
+        .block-link.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 8px 18px rgba(16, 185, 129, 0.25);
+        }
 
-.block-link.active i {
-    color: white;
-}
+        .block-link.active i {
+            color: white;
+        }
 
         .main-content {
             flex: 1;
@@ -246,12 +265,59 @@
             margin: 0 auto;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
+        .monitoring-header {
+            background: linear-gradient(135deg, #ecfdf5, #ffffff);
+            border: 1px solid #d1fae5;
+            border-radius: 18px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
         }
 
+        .monitoring-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-dark);
+            font-size: 1.15rem;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .monitoring-title i {
+            color: var(--primary);
+        }
+
+        .monitoring-location {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .monitoring-location span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            border: 1px solid #bbf7d0;
+            color: #334155;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .monitoring-location i {
+            color: var(--primary);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
         .card {
             background: var(--bg-card);
             padding: 1.5rem;
@@ -394,187 +460,233 @@
             .main-content {
                 padding: 1rem;
             }
+
+            .navbar {
+                padding: 0 1rem;
+            }
+
+            .nav-links {
+                gap: 10px;
+            }
+
+            .monitoring-title {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div id="notification-container"></div>
+<div id="notification-container"></div>
 
-    <nav class="navbar">
-        <div class="brand"><i class="fas fa-leaf"></i> AIPMS</div>
+<nav class="navbar">
+    <div class="brand">
+        <i class="fas fa-leaf"></i> AIPMS
+    </div>
 
-        <div class="nav-links">
-            <div class="notification-wrapper" id="notif-trigger">
-                <i class="fas fa-bell" style="font-size: 1.4rem; color: var(--text-muted);"></i>
-                <span id="notif-badge" style="display: none;"></span>
+    <div class="nav-links">
+        <div class="notification-wrapper" id="notif-trigger">
+            <i class="fas fa-bell" style="font-size: 1.4rem; color: var(--text-muted);"></i>
+            <span id="notif-badge" style="display: none;"></span>
 
-                <div id="notif-dropdown">
-                    <div style="font-size: 0.8rem; font-weight: 800; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 8px; display: flex; justify-content: space-between;">
-                        ALERTS <span style="color: var(--primary); cursor: pointer;" onclick="clearNotifs()">Clear</span>
-                    </div>
-                    <div id="notif-list" style="max-height: 200px; overflow-y: auto;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 10px;">No new alerts.</div>
+            <div id="notif-dropdown">
+                <div style="font-size: 0.8rem; font-weight: 800; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                    ALERTS <span style="color: var(--primary); cursor: pointer;" onclick="clearNotifs()">Clear</span>
+                </div>
+
+                <div id="notif-list" style="max-height: 200px; overflow-y: auto;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 10px;">
+                        No new alerts.
                     </div>
                 </div>
             </div>
-
-            <span>{{ request.user.username }}</span>
-            <a href="{% url 'farmer_logout' %}" 
-   style="background:#fee2e2; color:#991b1b; padding:8px 14px; border-radius:8px; text-decoration:none; font-weight:700;">
-    Logout
-</a>    
         </div>
-    </nav>
 
-    <div class="dashboard-layout">
+        <span>{{ request.user.username }}</span>
 
-      <aside class="sidebar">
-    <div class="sidebar-user">
-        <i class="fas fa-user-circle"></i>
-        {{ user_obj.username }}
-        <small>Farmer Account</small>
+        <a href="{% url 'farmer_logout' %}" class="logout-btn">
+            Logout
+        </a>
     </div>
+</nav>
 
-    <div class="sidebar-title">Farm Blocks</div>
+<div class="dashboard-layout">
 
-    {% for farm in farms %}
-        <div style="font-size: 0.75rem; font-weight: 800; color: var(--text-muted); margin: 1rem 0 0.5rem;">
-            {{ farm.name }}
+    <aside class="sidebar">
+        <div class="sidebar-user">
+            <i class="fas fa-user-circle"></i>
+            {{ user_obj.username }}
+            <small>Farmer Account</small>
         </div>
 
-        {% for block in farm.blocks.all %}
-            <a href="?block={{ block.id }}"
-               class="block-link {% if selected_block and selected_block.id == block.id %}active{% endif %}">
-                <i class="fas fa-seedling"></i>
-                {{ block.name }}
-            </a>
+        <div class="sidebar-title">Farm Blocks</div>
+
+        {% for farm in farms %}
+            <div class="farm-sidebar-title">
+                {{ farm.name }}
+            </div>
+
+            {% for block in farm.blocks.all %}
+                <a href="?block={{ block.id }}"
+                   class="block-link {% if selected_block and selected_block.id == block.id %}active{% endif %}">
+                    <i class="fas fa-seedling"></i>
+                    {{ block.name }}
+                </a>
+            {% empty %}
+                <p style="font-size: 0.8rem; color: var(--text-muted);">No blocks found.</p>
+            {% endfor %}
         {% empty %}
-            <p style="font-size: 0.8rem; color: var(--text-muted);">No blocks found.</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">No farms found.</p>
         {% endfor %}
-    {% empty %}
-        <p style="font-size: 0.8rem; color: var(--text-muted);">No farms found.</p>
-    {% endfor %}
-</aside>
+    </aside>
 
-        <main class="main-content">
-            <div class="container">
+    <main class="main-content">
+        <div class="container">
 
-                <div class="brand" style="margin-bottom: 1.5rem;">
-                    REAL-TIME PLANT MONITORING <i class="fas fa-tint"></i>
+            <div class="monitoring-header">
+                <div class="monitoring-title">
+                    REAL-TIME PLANT MONITORING
+                    <i class="fas fa-tint"></i>
                 </div>
 
-                <div class="plant-box">
-                    <svg id="plant-svg" viewBox="0 0 100 100">
-                        <defs>
-                            <clipPath id="water-clip">
-                                <rect id="water-level" x="0" y="80" width="100" height="0" />
-                            </clipPath>
-                        </defs>
+                {% if selected_block %}
+                    <div class="monitoring-location">
+                        <span>
+                            <i class="fas fa-tractor"></i>
+                            {{ selected_block.farm.name }}
+                        </span>
 
-                        <path d="M30,80 L70,80 L65,95 L35,95 Z" fill="#78350f" />
-
-                        <g fill="#cbd5e1">
-                            <rect x="48" y="20" width="4" height="60" />
-                            <path d="M50,45 Q20,30 15,55 Q40,65 50,45" />
-                            <path d="M50,55 Q80,40 85,65 Q60,75 50,55" />
-                            <path d="M50,30 Q50,0 70,10 Q60,25 50,30" />
-                        </g>
-
-                        <g id="hydrated-plant" fill="#10b981" clip-path="url(#water-clip)">
-                            <rect x="48" y="20" width="4" height="60" />
-                            <path d="M50,45 Q20,30 15,55 Q40,65 50,45" />
-                            <path d="M50,55 Q80,40 85,65 Q60,75 50,55" />
-                            <path d="M50,30 Q50,0 70,10 Q60,25 50,30" />
-                        </g>
-                    </svg>
-
-                    <div id="plant-status-text">Status: Checking...</div>
-                </div>
-
-                <div class="grid">
-                    <div class="card">
-                        <div class="card-header">SOIL MOISTURE <i class="fas fa-tint"></i></div>
-                        <div class="value" id="soil">--%</div>
-                        <div class="sub-value">Optimal: 40-70%</div>
+                        <span>
+                            <i class="fas fa-location-dot"></i>
+                            {{ selected_block.farm.location }}
+                        </span>
                     </div>
-
-                    <div class="card">
-                        <div class="card-header">WEATHER <i class="fas fa-cloud-showers-heavy" style="color:var(--secondary)"></i></div>
-                        <div>
-                            <div id="rainBadge" class="badge">Checking...</div>
-                            <div class="value" id="rainText" style="font-size: 1.2rem;">--</div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">TEMPERATURE <i class="fas fa-thermometer-half" style="color:#f97316"></i></div>
-                        <div class="value" id="temp">--°C</div>
-                        <div class="sub-value">Soil Temperature</div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">SOIL PH <i class="fas fa-flask" style="color:#8b5cf6"></i></div>
-                        <div class="value" id="ph">--</div>
-                        <div id="phStatus" class="sub-value">Checking...</div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">PUMP STATUS <i class="fas fa-cog"></i></div>
-                        <div>
-                            <div id="pumpBadge" class="badge bg-red">OFF</div>
-                            <div class="value" id="pump" style="font-size: 1.2rem;">Standby</div>
-                            <div class="sub-value"><i class="fas fa-history"></i> Last: {{ last_watered }}</div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">SYSTEM CONTROL <i class="fas fa-sliders-h"></i></div>
-
-                        <div style="display:flex; gap:5px; margin-top:10px;">
-                            <button id="manualBtn" class="mode-btn" onclick="sendCommand('toggle_mode')">MANUAL</button>
-                            <button id="autoBtn" class="mode-btn active" onclick="sendCommand('toggle_mode')">AUTO</button>
-                        </div>
-
-                        <div style="display:flex; gap:5px; margin-top:5px;">
-                            <button id="startBtn" class="btn-action btn-on" onclick="sendCommand('toggle_pump')">START</button>
-                            <button id="stopBtn" class="btn-action btn-off" onclick="sendCommand('toggle_pump')">STOP</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-top: 2rem; min-height: auto; width: 100%; overflow: hidden;">
-                    <div class="card-header" style="margin-bottom: 1rem;">
-                        WATERING HISTORY & LOGS <i class="fas fa-history"></i>
-                    </div>
-
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #f1f5f9; color: var(--text-muted);">
-                                    <th style="padding: 12px;">TIME & DATE</th>
-                                    <th style="padding: 12px;">MOISTURE</th>
-                                    <th style="padding: 12px;">MODE</th>
-                                    <th style="padding: 12px;">STATUS / NOTES</th>
-                                    <th style="padding: 12px;">VOLUME</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="water-log-body">
-                                <tr>
-                                    <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);">
-                                        Fetching latest logs...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+                {% endif %}
             </div>
-        </main>
-    </div>
+
+            <div class="plant-box">
+                <svg id="plant-svg" viewBox="0 0 100 100">
+                    <defs>
+                        <clipPath id="water-clip">
+                            <rect id="water-level" x="0" y="80" width="100" height="0" />
+                        </clipPath>
+                    </defs>
+
+                    <path d="M30,80 L70,80 L65,95 L35,95 Z" fill="#78350f" />
+
+                    <g fill="#cbd5e1">
+                        <rect x="48" y="20" width="4" height="60" />
+                        <path d="M50,45 Q20,30 15,55 Q40,65 50,45" />
+                        <path d="M50,55 Q80,40 85,65 Q60,75 50,55" />
+                        <path d="M50,30 Q50,0 70,10 Q60,25 50,30" />
+                    </g>
+
+                    <g id="hydrated-plant" fill="#10b981" clip-path="url(#water-clip)">
+                        <rect x="48" y="20" width="4" height="60" />
+                        <path d="M50,45 Q20,30 15,55 Q40,65 50,45" />
+                        <path d="M50,55 Q80,40 85,65 Q60,75 50,55" />
+                        <path d="M50,30 Q50,0 70,10 Q60,25 50,30" />
+                    </g>
+                </svg>
+
+                <div id="plant-status-text">Status: Checking...</div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">SOIL MOISTURE <i class="fas fa-tint"></i></div>
+                    <div class="value" id="soil">--%</div>
+                    <div class="sub-value">Optimal: 40-70%</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">WEATHER <i class="fas fa-cloud-showers-heavy" style="color:var(--secondary)"></i></div>
+                    <div>
+                        <div id="rainBadge" class="badge">Checking...</div>
+                        <div class="value" id="rainText" style="font-size: 1.2rem;">--</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        WATER TANK LEVEL <i class="fas fa-water" style="color:#0284c7"></i>
+                    </div>
+
+                    <div>
+                        <div id="tankBadge" class="badge bg-blue">Checking...</div>
+                        <div class="value" id="tankLevel">--%</div>
+                        <div class="sub-value" id="tankStatus">Tank status checking...</div>
+                    </div>
+                </div>
+
+                <div class="card" style="display:none;">
+                    <div class="card-header">TEMPERATURE <i class="fas fa-thermometer-half" style="color:#f97316"></i></div>
+                    <div class="value" id="temp">--°C</div>
+                    <div class="sub-value">Soil Temperature</div>
+                </div>
+
+                <div class="card" style="display:none;">
+                    <div class="card-header">SOIL PH <i class="fas fa-flask" style="color:#8b5cf6"></i></div>
+                    <div class="value" id="ph">--</div>
+                    <div id="phStatus" class="sub-value">Checking...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">PUMP STATUS <i class="fas fa-cog"></i></div>
+                    <div>
+                        <div id="pumpBadge" class="badge bg-red">OFF</div>
+                        <div class="value" id="pump" style="font-size: 1.2rem;">Standby</div>
+                        <div class="sub-value"><i class="fas fa-history"></i> Last: {{ last_watered }}</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">SYSTEM CONTROL <i class="fas fa-sliders-h"></i></div>
+
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <button id="manualBtn" class="mode-btn" onclick="sendCommand('toggle_mode')">MANUAL</button>
+                        <button id="autoBtn" class="mode-btn active" onclick="sendCommand('toggle_mode')">AUTO</button>
+                    </div>
+
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <button id="startBtn" class="btn-action btn-on" onclick="sendCommand('toggle_pump')">START</button>
+                        <button id="stopBtn" class="btn-action btn-off" onclick="sendCommand('toggle_pump')">STOP</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem; min-height: auto; width: 100%; overflow: hidden;">
+                <div class="card-header" style="margin-bottom: 1rem;">
+                    WATERING HISTORY & LOGS <i class="fas fa-history"></i>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #f1f5f9; color: var(--text-muted);">
+                                <th style="padding: 12px;">TIME & DATE</th>
+                                <th style="padding: 12px;">MOISTURE</th>
+                                <th style="padding: 12px;">MODE</th>
+                                <th style="padding: 12px;">STATUS / NOTES</th>
+                                <th style="padding: 12px;">VOLUME</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="water-log-body">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                                    Fetching latest logs...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
 
 <script>
     const csrfToken = '{{ csrf_token }}';
@@ -591,18 +703,28 @@
         notifBadge.style.display = 'none';
     });
 
-    window.addEventListener('click', () => notifDropdown.style.display = 'none');
+    window.addEventListener('click', () => {
+        notifDropdown.style.display = 'none';
+    });
 
     function clearNotifs() {
         notifList.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 10px;">No new alerts.</div>';
+        notifBadge.style.display = 'none';
     }
 
     function showToast(message, type = 'blue') {
         const container = document.getElementById('notification-container');
 
+        if (!container) {
+            console.log("Notification container not found");
+            return;
+        }
+
         notifBadge.style.display = 'block';
 
-        if (notifList.innerText.includes("No new alerts")) notifList.innerHTML = "";
+        if (notifList.innerText.includes("No new alerts")) {
+            notifList.innerHTML = "";
+        }
 
         const item = document.createElement('div');
         item.className = 'notif-item';
@@ -612,7 +734,15 @@
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
 
-        let icon = type === 'red' ? 'fa-exclamation-triangle' : (type === 'green' ? 'fa-check-circle' : 'fa-info-circle');
+        let icon = 'fa-info-circle';
+
+        if (type === 'red') {
+            icon = 'fa-exclamation-triangle';
+        } else if (type === 'green') {
+            icon = 'fa-check-circle';
+        } else if (type === 'blue') {
+            icon = 'fa-info-circle';
+        }
 
         toast.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
         container.appendChild(toast);
@@ -620,20 +750,36 @@
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateX(100%)';
-            setTimeout(() => toast.remove(), 500);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
         }, 5000);
     }
 
-    const notifySocket = new WebSocket(
-        (window.location.protocol === 'https:' ? 'wss://' : 'ws://')
-        + window.location.host + '/ws/notifications/'
+    const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+
+    const notificationSocket = new WebSocket(
+        protocol + window.location.host + "/ws/farm-updates/"
     );
 
-    notifySocket.onmessage = function(e) {
+    notificationSocket.onopen = function() {
+        console.log("Notification WebSocket connected");
+    };
+
+    notificationSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
-        console.log("WebSocket Data Received:", data);
-        showToast(data.message, data.type);
-        fetchLatest();
+        console.log("Notification received:", data);
+
+        showToast(data.message, data.notification_type);
+    };
+
+    notificationSocket.onerror = function(error) {
+        console.log("Notification WebSocket error:", error);
+    };
+
+    notificationSocket.onclose = function() {
+        console.log("Notification WebSocket closed");
     };
 
     function animatePlantFill(moisture) {
@@ -662,81 +808,169 @@
     }
 
     function fetchLatest() {
+        {% if selected_block %}
         fetch('/api/live-data/?block={{ selected_block.id }}')
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById("soil").innerText = (data.soil ?? 0) + "%";
-            animatePlantFill(data.soil ?? 0);
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("soil").innerText = (data.soil ?? 0) + "%";
+                animatePlantFill(data.soil ?? 0);
 
-            document.getElementById("temp").innerText = (data.temp ?? 0).toFixed(1) + "°C";
-            document.getElementById("ph").innerText = (data.ph ?? 7.0).toFixed(1);
+                document.getElementById("temp").innerText = (data.temp ?? 0).toFixed(1) + "°C";
+                document.getElementById("ph").innerText = (data.ph ?? 7.0).toFixed(1);
 
-            const phStat = document.getElementById("phStatus");
+                const phStat = document.getElementById("phStatus");
 
-            if(data.ph < 6) phStat.innerText = "Acidic";
-            else if(data.ph > 7.5) phStat.innerText = "Alkaline";
-            else phStat.innerText = "Ideal";
-
-            const rBadge = document.getElementById("rainBadge");
-
-            rBadge.innerText = data.rain ? "RAINING" : "CLEAR";
-            rBadge.className = data.rain ? "badge bg-blue" : "badge bg-green";
-
-            document.getElementById("rainText").innerText = data.rain ? "Rain Detected" : "No Rain";
-
-            const pBadge = document.getElementById("pumpBadge");
-
-            pBadge.innerText = data.pump ? "ACTIVE" : "OFF";
-            pBadge.className = data.pump ? "badge bg-green" : "badge bg-red";
-
-            document.getElementById("pump").innerText = data.pump ? "Irrigating..." : "Standby";
-
-            const startBtn = document.getElementById("startBtn");
-            const stopBtn = document.getElementById("stopBtn");
-
-            if (data.mode === 'manual') {
-                document.getElementById('manualBtn').classList.add('active');
-                document.getElementById('autoBtn').classList.remove('active');
-
-                startBtn.disabled = false;
-                stopBtn.disabled = false;
-
-                if (data.pump) {
-                    startBtn.classList.add('active');
-                    stopBtn.classList.remove('active');
+                if (data.ph < 6) {
+                    phStat.innerText = "Acidic";
+                } else if (data.ph > 7.5) {
+                    phStat.innerText = "Alkaline";
                 } else {
-                    startBtn.classList.remove('active');
-                    stopBtn.classList.add('active');
+                    phStat.innerText = "Ideal";
                 }
-            } else {
-                document.getElementById('autoBtn').classList.add('active');
-                document.getElementById('manualBtn').classList.remove('active');
 
-                startBtn.disabled = true;
-                stopBtn.disabled = true;
+                const rBadge = document.getElementById("rainBadge");
 
-                startBtn.classList.remove('active');
-                stopBtn.classList.remove('active');
-            }
-        });
+                rBadge.innerText = data.rain ? "RAINING" : "CLEAR";
+                rBadge.className = data.rain ? "badge bg-blue" : "badge bg-green";
+
+                document.getElementById("rainText").innerText = data.rain ? "Rain Detected" : "Clear Skies";
+
+                const tankLevel = data.tank_level ?? 0;
+                const tankBadge = document.getElementById("tankBadge");
+                const tankStatus = document.getElementById("tankStatus");
+
+                document.getElementById("tankLevel").innerText = tankLevel.toFixed(0) + "%";
+
+                if (tankLevel <= 20) {
+                    tankBadge.innerText = "LOW";
+                    tankBadge.className = "badge bg-red";
+                    tankStatus.innerText = "Refill water tank";
+                } else if (tankLevel <= 50) {
+                    tankBadge.innerText = "MEDIUM";
+                    tankBadge.className = "badge bg-blue";
+                    tankStatus.innerText = "Water level is moderate";
+                } else {
+                    tankBadge.innerText = "GOOD";
+                    tankBadge.className = "badge bg-green";
+                    tankStatus.innerText = "Water level is sufficient";
+                }
+
+                const pBadge = document.getElementById("pumpBadge");
+
+                pBadge.innerText = data.pump ? "ACTIVE" : "OFF";
+                pBadge.className = data.pump ? "badge bg-green" : "badge bg-red";
+
+                document.getElementById("pump").innerText = data.pump ? "Irrigating..." : "Standby";
+
+                const startBtn = document.getElementById("startBtn");
+                const stopBtn = document.getElementById("stopBtn");
+
+                if (data.mode === 'manual') {
+                    document.getElementById('manualBtn').classList.add('active');
+                    document.getElementById('autoBtn').classList.remove('active');
+
+                    startBtn.disabled = false;
+                    stopBtn.disabled = false;
+
+                    if (data.pump) {
+                        startBtn.classList.add('active');
+                        stopBtn.classList.remove('active');
+                    } else {
+                        startBtn.classList.remove('active');
+                        stopBtn.classList.add('active');
+                    }
+                } else {
+                    document.getElementById('autoBtn').classList.add('active');
+                    document.getElementById('manualBtn').classList.remove('active');
+
+                    startBtn.disabled = true;
+                    stopBtn.disabled = true;
+
+                    startBtn.classList.remove('active');
+                    stopBtn.classList.remove('active');
+                }
+            })
+            .catch(error => {
+                console.log("Live data error:", error);
+            });
+        {% endif %}
     }
 
     function sendCommand(actionType) {
-    fetch('/api/control-pump/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({
-            action: actionType,
-            block_id: "{{ selected_block.id }}"
+        {% if selected_block %}
+        fetch('/api/control-pump/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                action: actionType,
+                block_id: "{{ selected_block.id }}"
+            })
         })
-    }).then(() => fetchLatest());
+        .then(res => res.json())
+        .then(data => {
+            console.log("Command response:", data);
+            fetchLatest();
+        })
+        .catch(error => {
+            console.log("Command error:", error);
+        });
+        {% endif %}
+    }
+
+function fetchWaterLogs() {
+    {% if selected_block %}
+    fetch('/api/water-logs/?block_id={{ selected_block.id }}')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById("water-log-body");
+
+            if (!tbody) {
+                console.log("water-log-body not found");
+                return;
+            }
+
+            tbody.innerHTML = "";
+
+            if (!data.logs || data.logs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            No watering history yet.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            data.logs.forEach(log => {
+                const row = document.createElement("tr");
+                row.style.borderBottom = "1px solid #f1f5f9";
+
+                row.innerHTML = `
+                    <td style="padding: 12px;">${log.time}</td>
+                    <td style="padding: 12px;">${log.moisture}%</td>
+                    <td style="padding: 12px; text-transform: uppercase;">${log.mode}</td>
+                    <td style="padding: 12px;">${log.note}</td>
+                    <td style="padding: 12px;">${log.amount}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.log("Water logs error:", error);
+        });
+    {% endif %}
 }
 
-    fetchLatest();
-    setInterval(fetchLatest, 10000);
+fetchLatest();
+fetchWaterLogs();
+
+setInterval(fetchLatest, 10000);
+setInterval(fetchWaterLogs, 10000);
 </script>
 
 </body>

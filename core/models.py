@@ -5,7 +5,7 @@ from django.http import JsonResponse
 class Farm(models.Model):
     name = models.CharField(max_length=100, default="My Farm")
     location = models.CharField(max_length=200, default="Puerto Princesa City")
-    farmer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="farms")
+    farmer = models.ManyToManyField(User, blank=True, related_name="farms")
 
     def __str__(self):
         return f"{self.name} - {self.location}"
@@ -20,6 +20,7 @@ class Block(models.Model):
     current_ph = models.FloatField(default=7.0)
     current_temp = models.FloatField(default=0.0)
     is_raining = models.BooleanField(default=False)
+    water_tank_level = models.FloatField(default=0.0)
     
     # Independent Control per Block
     MODE_CHOICES = [('manual', 'Manual'), ('auto', 'Auto')]
@@ -40,6 +41,7 @@ class SensorData(models.Model):
     pump_status = models.BooleanField(default=False)
     mode = models.CharField(max_length=10, default="auto")
     timestamp = models.DateTimeField(auto_now_add=True)
+    water_tank_level = models.FloatField(default=0.0)
 
     class Meta:
         ordering = ['-timestamp']
@@ -114,3 +116,4 @@ class MicrocontrollerDevice(models.Model):
 
     def __str__(self):
         return f"{self.hardware_id} - {self.block.name}"
+    

@@ -1,0 +1,346 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Add Farm</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .form-card {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .form-header-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: #dcfce7;
+            color: #15803d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .form-header h3 {
+            margin: 0;
+            color: #0f172a;
+        }
+
+        .form-header p {
+            margin: 3px 0 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+        }
+
+        .farmer-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .farmer-dropdown-btn {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #fff;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .farmer-dropdown-btn:hover {
+            border-color: #16a34a;
+        }
+
+        .farmer-dropdown-menu {
+            display: none;
+            position: absolute;
+            width: 100%;
+            max-height: 240px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            margin-top: 5px;
+            z-index: 30;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .farmer-dropdown-menu.show {
+            display: block;
+        }
+
+        .farmer-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+
+        .farmer-option:hover {
+            background: #f0fdf4;
+        }
+
+        .farmer-option input {
+            width: auto;
+        }
+
+        .help-text {
+            display: block;
+            margin-top: 6px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .no-data-text {
+            padding: 12px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .form-actions button,
+        .form-actions a {
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-cancel {
+            padding: 10px;
+            border-radius: 8px;
+            background: #e2e8f0;
+            color: #334155;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .btn-cancel:hover {
+            background: #cbd5e1;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+
+        <a href="{% url 'lgu_farms' %}" class="sidebar-link active">
+            <i class="fas fa-tractor"></i> Farms
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class="sidebar-link">
+            <i class="fas fa-users"></i> Farmers
+        </a>
+
+        <a href="{% url 'lgu_analytics' %}" class="sidebar-link">
+            <i class="fas fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="{% url 'lgu_logs' %}" class="sidebar-link">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
+
+        <div class="sidebar-section">Management</div>
+
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
+
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Add Farm</h2>
+                <p>Register a new farm, create blocks, and assign farmer/s</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <div class="panel form-card">
+
+                <div class="form-header">
+                    <div class="form-header-icon">
+                        <i class="fas fa-tractor"></i>
+                    </div>
+                    <div>
+                        <h3>Farm Registration</h3>
+                        <p>Fill in the farm details and assign one or more farmers.</p>
+                    </div>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="form-grid">
+
+                        <div class="input-group">
+                            <label>Farm Name</label>
+                            <input type="text" name="farm_name" placeholder="Example: Green Valley Farm" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Farm Location</label>
+                            <input type="text" name="farm_location" placeholder="Example: Puerto Princesa City" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Number of Blocks</label>
+                            <input type="number" name="block_count" min="1" value="1" required>
+                            <small class="help-text">
+                                The system will automatically create Block A, Block B, and so on.
+                            </small>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Assign Farmer/s</label>
+
+                            <div class="farmer-dropdown">
+                                <button type="button" class="farmer-dropdown-btn" id="farmerDropdownBtn">
+                                    <span id="selectedFarmerText">Select farmer/s</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+
+                                <div class="farmer-dropdown-menu" id="farmerDropdownMenu">
+                                    {% for f in farmer %}
+                                        <label class="farmer-option">
+                                            <input type="checkbox" name="farmer" value="{{ f.id }}" class="farmer-checkbox">
+                                            <span>
+                                                {{ f.full_name }} 
+                                                {% if f.farmer_id %}
+                                                    - {{ f.farmer_id }}
+                                                {% endif %}
+                                            </span>
+                                        </label>
+                                    {% empty %}
+                                        <div class="no-data-text">
+                                            No farmers available. Create a farmer account first.
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <small class="help-text">
+                                You can assign multiple farmers to this farm.
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{% url 'lgu_farms' %}" class="btn-cancel">
+                            Cancel
+                        </a>
+
+                        <button type="submit">
+                            <i class="fas fa-plus"></i> Add Farm
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+    const farmerDropdownBtn = document.getElementById("farmerDropdownBtn");
+    const farmerDropdownMenu = document.getElementById("farmerDropdownMenu");
+    const selectedFarmerText = document.getElementById("selectedFarmerText");
+    const farmerCheckboxes = document.querySelectorAll(".farmer-checkbox");
+
+    farmerDropdownBtn.addEventListener("click", function () {
+        farmerDropdownMenu.classList.toggle("show");
+    });
+
+    farmerCheckboxes.forEach(function (checkbox) {
+        checkbox.addEventListener("change", function () {
+            const selected = document.querySelectorAll(".farmer-checkbox:checked");
+
+            if (selected.length === 0) {
+                selectedFarmerText.textContent = "Select farmer/s";
+            } else if (selected.length === 1) {
+                selectedFarmerText.textContent = selected[0].nextElementSibling.textContent.trim();
+            } else {
+                selectedFarmerText.textContent = selected.length + " farmers selected";
+            }
+        });
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest(".farmer-dropdown")) {
+            farmerDropdownMenu.classList.remove("show");
+        }
+    });
+</script>
+
+</body>
+</html>

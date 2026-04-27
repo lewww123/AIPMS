@@ -39,6 +39,7 @@ urlpatterns = [
     path("lgu/farmers/", views.lgu_farmers, name="lgu_farmers"),
     path("lgu/analytics/", views.lgu_analytics, name="lgu_analytics"),
     path("lgu/logs/", views.lgu_logs, name="lgu_logs"),
+ 
     
     #___________________CRUUUUUUUUUUUUUUUUUUDDDDDDDDDD_________#
     path("lgu/farmers/<int:farmer_id>/", views.lgu_farmer_detail, name="lgu_farmer_detail"),

@@ -31,7 +31,7 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
-    "192.168.1.11",
+    "192.168.1.10",
     "*",
     ".onrender.com",
     "aipms-n38i.onrender.com",

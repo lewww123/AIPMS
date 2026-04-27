@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AIPMS | Delete Farm</title>
+
+    <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .delete-card {
+            max-width: 520px;
+            margin: 80px auto;
+            text-align: center;
+        }
+
+        .delete-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #fee2e2;
+            color: #dc2626;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 28px;
+        }
+
+        .delete-warning {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .delete-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .delete-actions button,
+        .delete-actions a {
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-cancel {
+            padding: 10px;
+            border-radius: 8px;
+            background: #e2e8f0;
+            color: #334155;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="panel delete-card">
+
+        <div class="delete-icon">
+            <i class="fas fa-trash"></i>
+        </div>
+
+        <h2>Delete Farm</h2>
+
+        <p>
+            Are you sure you want to delete <strong>{{ farm.name }}</strong>?
+        </p>
+
+        <div class="delete-warning">
+            This will also delete the blocks, sensor data, and water logs connected to this farm.
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="delete-actions">
+                <a href="{% url 'lgu_farms' %}" class="btn-cancel">
+                    Cancel
+                </a>
+
+                <button type="submit" class="btn-danger">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

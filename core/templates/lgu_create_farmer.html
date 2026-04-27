@@ -7,6 +7,82 @@
 
     <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .farm-dropdown {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .farm-dropdown-btn {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #fff;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .farm-dropdown-btn:hover {
+            border-color: #16a34a;
+        }
+
+        .farm-dropdown-menu {
+            display: none;
+            position: absolute;
+            width: 100%;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            margin-top: 5px;
+            z-index: 20;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .farm-dropdown-menu.show {
+            display: block;
+        }
+
+        .farm-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+
+        .farm-option:hover {
+            background: #f0fdf4;
+        }
+
+        .farm-option input {
+            width: auto;
+        }
+
+        .farm-help-text {
+            display: block;
+            margin-top: 6px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .no-farm-text {
+            padding: 12px;
+            color: #64748b;
+            font-size: 14px;
+        }
+    </style>
 </head>
 
 <body>
@@ -62,7 +138,7 @@
         <div class="topbar">
             <div>
                 <h2>Create Farmer Account</h2>
-                <p>Register a new farmer and farm system</p>
+                <p>Register a new farmer and assign them to existing farm/s</p>
             </div>
         </div>
 
@@ -89,19 +165,36 @@
                     <hr style="margin:15px 0; border:none; border-top:1px solid #e2e8f0;">
 
                     <h3 class="section-title">
-                        <i class="fas fa-tractor"></i> Farm Information
+                        <i class="fas fa-tractor"></i> Farm Assignment
                     </h3>
 
-                    <label>Farm Name</label>
-                    <input type="text" name="farm_name" required>
+                    <label>Assign to Farm/s</label>
 
-                    <label>Farm Location</label>
-                    <input type="text" name="farm_location" required>
+                    <div class="farm-dropdown">
+                        <button type="button" class="farm-dropdown-btn" id="farmDropdownBtn">
+                            <span id="selectedFarmText">Select farm/s</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
 
-                    <label>Number of Blocks</label>
-                    <input type="number" name="block_count" min="1" value="1" required>
+                        <div class="farm-dropdown-menu" id="farmDropdownMenu">
+                            {% for farm in farms %}
+                                <label class="farm-option">
+                                    <input type="checkbox" name="farms" value="{{ farm.id }}" class="farm-checkbox">
+                                    <span>{{ farm.name }} - {{ farm.location }}</span>
+                                </label>
+                            {% empty %}
+                                <div class="no-farm-text">
+                                    No farms available. Add a farm first.
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
 
-                    <button type="submit" style="margin-top:10px; width:100%;">
+                    <small class="farm-help-text">
+                        You can select one or more farms.
+                    </small>
+
+                    <button type="submit" style="margin-top:15px; width:100%;">
                         Create Farmer
                     </button>
 
@@ -114,6 +207,37 @@
     </main>
 
 </div>
+
+<script>
+    const dropdownBtn = document.getElementById("farmDropdownBtn");
+    const dropdownMenu = document.getElementById("farmDropdownMenu");
+    const selectedFarmText = document.getElementById("selectedFarmText");
+    const checkboxes = document.querySelectorAll(".farm-checkbox");
+
+    dropdownBtn.addEventListener("click", function () {
+        dropdownMenu.classList.toggle("show");
+    });
+
+    checkboxes.forEach(function (checkbox) {
+        checkbox.addEventListener("change", function () {
+            const selected = document.querySelectorAll(".farm-checkbox:checked");
+
+            if (selected.length === 0) {
+                selectedFarmText.textContent = "Select farm/s";
+            } else if (selected.length === 1) {
+                selectedFarmText.textContent = selected[0].nextElementSibling.textContent;
+            } else {
+                selectedFarmText.textContent = selected.length + " farms selected";
+            }
+        });
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest(".farm-dropdown")) {
+            dropdownMenu.classList.remove("show");
+        }
+    });
+</script>
 
 </body>
 </html>

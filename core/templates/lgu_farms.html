@@ -45,7 +45,6 @@
             <i class="fas fa-clipboard-list"></i> Logs
         </a>
 
-
         <div class="sidebar-section">Management</div>
 
         <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
@@ -65,6 +64,10 @@
                 <h2>Farm Management</h2>
                 <p>All registered farms and assigned farmers</p>
             </div>
+
+            <a href="{% url 'lgu_add_farm' %}" class="btn">
+                <i class="fas fa-plus"></i> Add Farm
+            </a>
         </div>
 
         <div class="container">
@@ -72,33 +75,34 @@
             <h3 class="section-title">
                 <i class="fas fa-tractor"></i> Farms Overview
             </h3>
-<div class="panel">
-    <form method="GET" class="search-row">
 
-        <input type="text"
-               name="search"
-               placeholder="Search farm, farmer, location, or block..."
-               value="{{ search }}">
+            <div class="panel">
+                <form method="GET" class="search-row">
 
-        <select name="filter_by">
-            <option value="all">All</option>
-            <option value="name">Farm Name</option>
-            <option value="farmer">Farmer</option>
-            <option value="location">Location</option>
-            <option value="block">Block</option>
-        </select>
+                    <input type="text"
+                           name="search"
+                           placeholder="Search farm, farmer, location, or block..."
+                           value="{{ search }}">
 
-        <button type="submit">Search</button>
+                    <select name="filter_by">
+                        <option value="all" {% if filter_by == "all" %}selected{% endif %}>All</option>
+                        <option value="name" {% if filter_by == "name" %}selected{% endif %}>Farm Name</option>
+                        <option value="farmer" {% if filter_by == "farmer" %}selected{% endif %}>Farmer</option>
+                        <option value="location" {% if filter_by == "location" %}selected{% endif %}>Location</option>
+                    </select>
 
-        <a href="{% url 'lgu_farms' %}" class="btn btn-secondary">Clear</a>
+                    <button type="submit">Search</button>
 
-    </form>
-</div>
+                    <a href="{% url 'lgu_farms' %}" class="btn btn-secondary">Clear</a>
+
+                </form>
+            </div>
+
             <table>
                 <thead>
                     <tr>
                         <th>Farm Name</th>
-                        <th>Farmer</th>
+                        <th>Farmer/s</th>
                         <th>Location</th>
                         <th>Total Blocks</th>
                         <th>Actions</th>
@@ -111,8 +115,16 @@
                         <td>{{ farm.name }}</td>
 
                         <td>
-                            {% if farm.farmer %}
-                                {{ farm.farmer.farmer_profile.full_name }}
+                            {% if farm.farmer.all %}
+                                {% for user in farm.farmer.all %}
+                                    {% if user.farmer_profile.full_name %}
+                                        {{ user.farmer_profile.full_name }}
+                                    {% else %}
+                                        {{ user.username }}
+                                    {% endif %}
+
+                                    {% if not forloop.last %}, {% endif %}
+                                {% endfor %}
                             {% else %}
                                 No Farmer
                             {% endif %}
@@ -124,6 +136,8 @@
 
                         <td class="action-links">
                             <a href="{% url 'lgu_farm_detail' farm.id %}" class="view">View</a>
+                            <a href="{% url 'lgu_farm_edit' farm.id %}" class="edit">Edit</a>
+                            <a href="{% url 'lgu_farm_delete' farm.id %}" class="delete">Delete</a>
                         </td>
                     </tr>
 

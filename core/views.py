@@ -29,6 +29,23 @@ REDUCED_VOLUME_LITERS = 0.5  # Top-up amount during rain
 MOISTURE_CRITICAL = 25  # Below this, water even if raining
 MOISTURE_OK = 50        # Above this, skip if raining
 
+def send_alert(message, alert_style):
+    print("SEND ALERT CALLED:", message, alert_style)
+
+    channel_layer = get_channel_layer()
+
+    if channel_layer is None:
+        print(f"Alert skipped: {message}")
+        return
+
+    async_to_sync(channel_layer.group_send)(
+        "farm_updates",
+        {
+            "type": "send_notification",
+            "message": message,
+            "notification_type": alert_style
+        }
+    )
 
 def farmer_entry(request):
     if request.user.is_authenticated:
@@ -144,13 +161,13 @@ def generate_pin():
 
 
 def lgu_create_farmer(request):
+    farms = Farm.objects.all()
+
     if request.method == "POST":
         full_name = request.POST.get("full_name")
         contact_number = request.POST.get("contact_number")
         address = request.POST.get("address")
-        farm_name = request.POST.get("farm_name")
-        farm_location = request.POST.get("farm_location")
-        block_count = int(request.POST.get("block_count", 1))
+        selected_farm_ids = request.POST.getlist("farms")
 
         farmer_id = generate_farmer_id()
         pin = generate_pin()
@@ -174,17 +191,10 @@ def lgu_create_farmer(request):
             address=address
         )
 
-        farm = Farm.objects.create(
-            name=farm_name,
-            location=farm_location,
-            farmer=user
-        )
+        selected_farms = Farm.objects.filter(id__in=selected_farm_ids)
 
-        for i in range(1, block_count + 1):
-            Block.objects.create(
-                farm=farm,
-                name=f"Block {chr(64 + i)}"
-            )
+        for farm in selected_farms:
+            farm.farmer.add(user)
 
         return render(request, "lgu_farmer_created.html", {
             "farmer_id": farmer_id,
@@ -192,7 +202,9 @@ def lgu_create_farmer(request):
             "full_name": full_name
         })
 
-    return render(request, "lgu_create_farmer.html")
+    return render(request, "lgu_create_farmer.html", {
+        "farms": farms
+    })
 #________________________FARMER_LOG INN________________#
 
 def farmer_login(request):
@@ -264,101 +276,216 @@ def change_pin(request):
     return render(request, "change_pin.html")
 
 # ================= AUTO CONTROL ENGINE =================
-def auto_control_logic():
+def auto_control_logic(block):
     current_time = now().time()
-    farm, _ = Farm.objects.get_or_create(id=1)
-    control, _ = PumpControl.objects.get_or_create(id=1, defaults={'farm': farm})
-    latest_sensor = SensorData.objects.filter(farm=farm).last()
+
+    control, _ = PumpControl.objects.get_or_create(block=block)
+    latest_sensor = block.sensor_readings.first()
 
     if control.mode != "auto" or not latest_sensor:
         return
 
-    # Define Windows
-    morning_start, morning_end = datetime.strptime("06:00", "%H:%M").time(), datetime.strptime("07:00", "%H:%M").time()
-    afternoon_start, afternoon_end = datetime.strptime("16:00", "%H:%M").time(), datetime.strptime("17:00", "%H:%M").time()
+    # Watering schedule
+    morning_start = datetime.strptime("06:00", "%H:%M").time()
+    morning_end = datetime.strptime("07:00", "%H:%M").time()
+
+    afternoon_start = datetime.strptime("17:00", "%H:%M").time()
+    afternoon_end = datetime.strptime("19:00", "%H:%M").time()
 
     is_morning = morning_start <= current_time <= morning_end
     is_afternoon = afternoon_start <= current_time <= afternoon_end
 
-    if is_morning or is_afternoon:
-        soil = latest_sensor.soil_moisture
-        raining = latest_sensor.is_raining
-        
-        # DECISION LOGIC
-        status_note = ""
-        target_volume = 0
-
-        if raining:
-            if soil > MOISTURE_OK:
-                target_volume = 0
-                status_note = "Skipped: Raining & Sufficient Moisture"
-            elif soil < MOISTURE_CRITICAL:
-                target_volume = REDUCED_VOLUME_LITERS
-                status_note = "Rain Top-up: Critical Moisture Bypass"
-            else:
-                target_volume = 0
-                status_note = "Skipped: Raining"
-        else:
-            target_volume = FULL_VOLUME_LITERS
-            status_note = "Scheduled Cycle"
-
-        # Check if we already finished today
-        hour_check = 6 if is_morning else 16
-        already_done = WaterLog.objects.filter(
-            farm=farm, 
-            timestamp__date=now().date(), 
-            timestamp__hour=hour_check,
-            amount__gt=0 
-        ).exists()
-
-        if target_volume <= 0 and not already_done:
-            # Log the skip if it's the first time in the window
-            if not WaterLog.objects.filter(farm=farm, timestamp__date=now().date(), timestamp__hour=hour_check).exists():
-                WaterLog.objects.create(
-                    farm=farm, 
-                    amount=0, 
-                    moisture_at_time=soil,
-                    mode="auto",
-                    note=status_note
-                )
-                send_alert(f"Auto-Logic: {status_note}", "blue")
-            return
-
-        if not already_done and not control.status:
-            # START PUMPING
-            control.status = True
+    # Outside schedule: keep pump off in auto mode, but still keep storing sensor data
+    if not is_morning and not is_afternoon:
+        if control.status:
+            control.status = False
             control.save()
+
+            block.pump_status = False
+            block.save()
+
+            send_alert(
+                f"Pump Stopped: {block.farm.name} - {block.name} stopped because it is outside the watering schedule.",
+                "blue"
+            )
+
+        return
+
+    soil = latest_sensor.soil_moisture
+    raining = latest_sensor.is_raining
+    tank_level = latest_sensor.water_tank_level
+
+    hour_check = 6 if is_morning else 16
+
+    already_done = WaterLog.objects.filter(
+        block=block,
+        timestamp__date=now().date(),
+        timestamp__hour=hour_check,
+        amount__gt=0
+    ).exists()
+
+    already_logged_skip = WaterLog.objects.filter(
+        block=block,
+        timestamp__date=now().date(),
+        timestamp__hour=hour_check,
+        amount=0,
+        note__icontains="Skipped"
+    ).exists()
+
+    # Tank safety
+    if tank_level <= 20:
+        if control.status:
+            control.status = False
+            control.save()
+
+            block.pump_status = False
+            block.save()
+
+        if not already_logged_skip and not already_done:
             WaterLog.objects.create(
-                farm=farm, 
-                amount=0, 
+                block=block,
+                amount=0,
                 moisture_at_time=soil,
                 mode="auto",
-                note="Started: " + status_note
+                note=f"Skipped: Low water tank level ({tank_level:.0f}%)"
             )
-            send_alert(f"Pump Started: {status_note} ({soil}% moisture)", "green")
-            
-        elif control.status:
-            # Check for STOP
-            current_log = WaterLog.objects.filter(farm=farm).last()
-            elapsed = (now() - current_log.timestamp).total_seconds()
-            required_duration = target_volume / FLOW_RATE_L_PER_SEC
 
-            if elapsed >= required_duration:
-                control.status = False
-                control.save()
-                current_log.amount = target_volume / 1000
-                current_log.note = f"Completed: {status_note}"
-                current_log.save()
-                send_alert(f"Pump Stopped: Applied {target_volume}L", "green")
+            send_alert(
+                f"Low Water Tank Level: {block.farm.name} - {block.name} tank is at {tank_level:.0f}%. Irrigation skipped.",
+                "red"
+            )
+
+        return
+
+    # Decide watering amount
+    target_volume = 0
+    status_note = ""
+
+    if raining:
+        if soil > MOISTURE_OK:
+            target_volume = 0
+            status_note = "Skipped: Rain detected and soil moisture is sufficient"
+
+        elif soil < MOISTURE_CRITICAL:
+            target_volume = REDUCED_VOLUME_LITERS
+            status_note = "Reduced irrigation: Rain detected but soil is still critically dry"
+
+        else:
+            target_volume = REDUCED_VOLUME_LITERS
+            status_note = "Reduced irrigation: Light rain detected but soil still needs water"
+
+    else:
+        if soil < MOISTURE_OK:
+            target_volume = FULL_VOLUME_LITERS
+            status_note = "Normal scheduled irrigation"
+        else:
+            target_volume = 0
+            status_note = "Skipped: Soil moisture is sufficient"
+
+    # If no watering is needed, log once
+    if target_volume <= 0:
+        if not already_logged_skip and not already_done:
+            WaterLog.objects.create(
+                block=block,
+                amount=0,
+                moisture_at_time=soil,
+                mode="auto",
+                note=status_note
+            )
+
+            send_alert(
+                f"Auto Irrigation: {block.farm.name} - {block.name}: {status_note}.",
+                "blue"
+            )
+
+        if control.status:
+            control.status = False
+            control.save()
+
+            block.pump_status = False
+            block.save()
+
+        return
+
+    # If watering was already completed for this schedule, keep pump off
+    if already_done:
+        if control.status:
+            control.status = False
+            control.save()
+
+            block.pump_status = False
+            block.save()
+
+        return
+
+    # Start pump
+    if not control.status:
+        control.status = True
+        control.save()
+
+        block.pump_status = True
+        block.save()
+
+        WaterLog.objects.create(
+            block=block,
+            amount=0,
+            moisture_at_time=soil,
+            mode="auto",
+            note="Started: " + status_note
+        )
+
+        if raining:
+            send_alert(
+                f"Pump Started: {block.farm.name} - {block.name} started reduced irrigation because rain was detected but soil is still dry.",
+                "green"
+            )
+        else:
+            send_alert(
+                f"Pump Started: {block.farm.name} - {block.name} started normal scheduled irrigation.",
+                "green"
+            )
+
+        return
+
+    # Stop pump after required duration
+    if control.status:
+        current_log = WaterLog.objects.filter(
+            block=block,
+            amount=0,
+            note__startswith="Started"
+        ).order_by("-timestamp").first()
+
+        if not current_log:
+            return
+
+        elapsed = (now() - current_log.timestamp).total_seconds()
+        required_duration = target_volume / FLOW_RATE_L_PER_SEC
+
+        if elapsed >= required_duration:
+            control.status = False
+            control.save()
+
+            block.pump_status = False
+            block.save()
+
+            current_log.amount = target_volume / 1000
+            current_log.moisture_at_time = soil
+            current_log.note = f"Completed: {status_note}"
+            current_log.save()
+
+            send_alert(
+                f"Pump Stopped: {block.farm.name} - {block.name} irrigation completed. Applied {target_volume}L.",
+                "green"
+            )
 
 # ================= ARDUINO / HARDWARE API =================
+
 @csrf_exempt
 def receive_data(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
 
-            # 🔥 GET DEVICE
             hardware_id = data.get("hardware_id")
 
             if not hardware_id:
@@ -370,24 +497,104 @@ def receive_data(request):
             )
 
             block = device.block
-            device.save()  # update last_seen if you want
+            device.save()
 
-            # 🔥 SAVE SENSOR DATA
+            def to_bool(value):
+                if isinstance(value, bool):
+                    return value
+                if isinstance(value, str):
+                    return value.lower() in ["true", "1", "yes", "on"]
+                return bool(value)
+
+            soil = int(data.get("soil", 0))
+            ph = float(data.get("ph", 7.0))
+            temp = float(data.get("temp", 0.0))
+            rain = to_bool(data.get("rain", False))
+            pump = to_bool(data.get("pump", False))
+            tank_level = float(data.get("tank_level", 0.0))
+
+            control, _ = PumpControl.objects.get_or_create(block=block)
+            mode = control.mode
+
+            # Get previous rain status BEFORE saving new sensor data
+            previous_sensor = block.sensor_readings.first()
+            previous_rain = previous_sensor.is_raining if previous_sensor else False
+
             SensorData.objects.create(
                 block=block,
-                soil_moisture=int(data.get("soil", 0)),
-                ph_level=float(data.get("ph", 7.0)),
-                temperature=float(data.get("temp", 0.0)),
-                is_raining=bool(data.get("rain", False)),
-                pump_status=bool(data.get("pump", False)),
-                mode=str(data.get("mode", "auto"))
+                soil_moisture=soil,
+                ph_level=ph,
+                temperature=temp,
+                is_raining=rain,
+                water_tank_level=tank_level,
+                pump_status=control.status,
+                mode=mode
             )
 
-            # 🔥 RUN CONTROL LOGIC
-            auto_control_logic()
+            block.current_moisture = soil
+            block.current_ph = ph
+            block.current_temp = temp
+            block.is_raining = rain
+            block.water_tank_level = tank_level
+            block.mode = control.mode
+            block.pump_status = control.status
+            block.save()
 
-            # 🔥 GET CONTROL FOR THIS BLOCK
-            control, _ = PumpControl.objects.get_or_create(block=block)
+            # Rain detected notification
+            if rain and not previous_rain:
+                WaterLog.objects.create(
+                    block=block,
+                    amount=0,
+                    moisture_at_time=soil,
+                    mode=control.mode,
+                    note="Rain detected alert"
+                )
+
+                send_alert(
+                    f"Rain Detected: {block.farm.name} - {block.name}. Irrigation may be paused or reduced.",
+                    "blue"
+                )
+
+            # Clear skies notification
+            if not rain and previous_rain:
+                WaterLog.objects.create(
+                    block=block,
+                    amount=0,
+                    moisture_at_time=soil,
+                    mode=control.mode,
+                    note="Clear skies alert"
+                )
+
+                send_alert(
+                    f"Clear Skies: {block.farm.name} - {block.name}. Rain is no longer detected.",
+                    "green"
+                )
+
+            # Low water tank notification, once every 5 minutes
+            recent_low_tank_alert = WaterLog.objects.filter(
+                block=block,
+                note__icontains="Low water tank alert",
+                timestamp__gte=now() - timedelta(seconds=30)
+            ).exists()
+
+            if tank_level <= 20 and not recent_low_tank_alert:
+                WaterLog.objects.create(
+                    block=block,
+                    amount=0,
+                    moisture_at_time=soil,
+                    mode=control.mode,
+                    note=f"Low water tank alert: Tank level is {tank_level:.0f}%"
+                )
+
+                send_alert(
+                    f"Low Water Tank Level: {block.farm.name} - {block.name} tank is at {tank_level:.0f}%. Please refill the water tank.",
+                    "red"
+                )
+
+            auto_control_logic(block)
+
+            control.refresh_from_db()
+            block.refresh_from_db()
 
             return JsonResponse({
                 "status": control.status,
@@ -402,7 +609,6 @@ def receive_data(request):
             return JsonResponse({"error": str(e)}, status=400)
 
     return JsonResponse({"error": "POST only"}, status=405)
-
 # ================= DASHBOARD ROUTING =================
 @farmer_required
 def dashboard_router(request):
@@ -431,24 +637,25 @@ def get_live_data(request):
             ph = latest.ph_level
             temp = latest.temperature
             rain = latest.is_raining
+            tank_level = latest.water_tank_level
         else:
             soil = block.current_moisture
             ph = block.current_ph
             temp = block.current_temp
             rain = block.is_raining
+            tank_level = block.water_tank_level
 
         return JsonResponse({
-            "soil": soil,
-            "ph": ph,
-            "temp": temp,
-            "rain": rain,
-            "pump": block.pump_status,
-            "mode": block.mode
-        })
-
+        "soil": soil,
+        "ph": ph,
+        "temp": temp,
+        "rain": rain,
+        "tank_level": tank_level,
+        "pump": block.pump_status,
+        "mode": block.mode
+})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
-
 
 @csrf_exempt
 def control_pump(request):
@@ -460,21 +667,30 @@ def control_pump(request):
             block_id = data.get("block_id")
 
             block = Block.objects.get(id=block_id)
+            control, _ = PumpControl.objects.get_or_create(block=block)
 
             if action == "toggle_mode":
-                block.mode = "manual" if block.mode == "auto" else "auto"
+                new_mode = "manual" if control.mode == "auto" else "auto"
 
-                if block.mode == "auto":
+                control.mode = new_mode
+                block.mode = new_mode
+
+                if new_mode == "auto":
+                    control.status = False
                     block.pump_status = False
 
+                control.save()
                 block.save()
 
             elif action == "toggle_pump":
-                if block.mode == "manual":
-                    block.pump_status = not block.pump_status
+                if control.mode == "manual":
+                    control.status = not control.status
+                    block.pump_status = control.status
+
+                    control.save()
                     block.save()
 
-                    if block.pump_status:
+                    if control.status:
                         WaterLog.objects.create(
                             block=block,
                             amount=0,
@@ -483,10 +699,43 @@ def control_pump(request):
                             note="Manual Start"
                         )
 
+                        send_alert(
+                            f"Water Pump Started: {block.farm.name} - {block.name} pump was turned ON manually.",
+                            "green"
+                        )
+
+                    else:
+                        WaterLog.objects.create(
+                            block=block,
+                            amount=0,
+                            moisture_at_time=block.current_moisture,
+                            mode="manual",
+                            note="Manual Stop"
+                        )
+
+                        send_alert(
+                            f"Water Pump Stopped: {block.farm.name} - {block.name} pump was turned OFF manually.",
+                            "blue"
+                        )
+
+                else:
+                    return JsonResponse({
+                        "status": "error",
+                        "message": "Pump can only be controlled in manual mode",
+                        "mode": control.mode,
+                        "pump": control.status
+                    }, status=400)
+
+            else:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Invalid action"
+                }, status=400)
+
             return JsonResponse({
                 "status": "success",
-                "mode": block.mode,
-                "pump": block.pump_status
+                "mode": control.mode,
+                "pump": control.status
             })
 
         except Exception as e:
@@ -499,7 +748,6 @@ def control_pump(request):
         "status": "error",
         "message": "Invalid method"
     }, status=400)
-    
 # ================= LGU ANALYTICS & LOGS =================
 def last_watered(request):
     last = WaterLog.objects.filter(amount__gt=0).last()
@@ -510,6 +758,56 @@ def last_watered(request):
         "amount_m3": last.amount,
         "display_text": f"{last.amount * 1000} Liters" # Convert back to Liters for UI
     })
+
+# ================= LGU ANALYTICS & LOGS =================
+def last_watered(request):
+    last = WaterLog.objects.filter(amount__gt=0).last()
+    if not last:
+        return JsonResponse({"last_watered_time": "No data", "amount_m3": 0})
+    return JsonResponse({
+        "last_watered_time": last.timestamp.strftime("%b %d, %I:%M %p"),
+        "amount_m3": last.amount,
+        "display_text": f"{last.amount * 1000} Liters"
+    })
+
+
+def list_farms(request):
+    farms = Farm.objects.all().values("id", "name", "location")
+    return JsonResponse(list(farms), safe=False)
+
+def water_logs(request):
+    """Returns the latest watering history for the selected block."""
+    block_id = request.GET.get("block_id")
+
+    logs = WaterLog.objects.select_related(
+        "block",
+        "block__farm"
+    ).order_by("-timestamp")
+
+    if block_id:
+        logs = logs.filter(block_id=block_id)
+
+    logs = logs[:50]
+
+    log_data = []
+
+    for log in logs:
+        if log.amount and log.amount > 0:
+            volume_display = f"{log.amount * 1000:.1f}L"
+        else:
+            volume_display = "-"
+
+        log_data.append({
+            "time": log.timestamp.strftime("%b %d, %I:%M %p"),
+            "farm": log.block.farm.name if log.block and log.block.farm else "Unknown Farm",
+            "block": log.block.name if log.block else "Unknown Block",
+            "moisture": log.moisture_at_time if log.moisture_at_time is not None else "-",
+            "mode": log.mode or "-",
+            "note": log.note or "Regular Cycle",
+            "amount": volume_display
+        })
+
+    return JsonResponse({"logs": log_data})
 
 def daily_water_count(request):
     farm_id = request.GET.get('farm_id', 1)
@@ -580,12 +878,11 @@ def farmer_dashboard(request):
 @lgu_required
 def lgu_dashboard(request):
     farmers = FarmerProfile.objects.select_related("user").all()
-    farms = Farm.objects.prefetch_related("blocks__sensor_readings").select_related("farmer")
+    farms = Farm.objects.prefetch_related("farmer", "blocks__sensor_readings").all()
 
     farm_overview = []
     priority_alerts = []
 
-    # Helper function
     def add_alert(alert_type, message, timestamp=None):
         priority_map = {
             "danger": 1,
@@ -621,7 +918,6 @@ def lgu_dashboard(request):
             ph_list.append(ph)
             temp_list.append(temp)
 
-            # ALERTS
             if moisture < 35:
                 add_alert(
                     "danger",
@@ -671,7 +967,6 @@ def lgu_dashboard(request):
                     timestamp
                 )
 
-        # AVERAGES
         count = len(moisture_list)
 
         avg_moisture = sum(moisture_list) / count if count else 0
@@ -687,7 +982,7 @@ def lgu_dashboard(request):
 
         farm_overview.append({
             "farm": farm,
-            "farmer": farm.farmer,
+            "farmer": farm.farmer.all(),
             "block_count": count,
             "avg_moisture": round(avg_moisture, 1),
             "avg_ph": round(avg_ph, 1),
@@ -695,7 +990,6 @@ def lgu_dashboard(request):
             "status": status,
         })
 
-    # SORT + LIMIT (IMPORTANT)
     priority_alerts = sorted(
         priority_alerts,
         key=lambda a: (a["priority"], -a["timestamp"].timestamp())
@@ -705,47 +999,6 @@ def lgu_dashboard(request):
         "farmers": farmers,
         "farm_overview": farm_overview,
         "priority_alerts": priority_alerts,
-    })
-def list_farms(request):
-    farms = Farm.objects.all().values('id', 'name', 'location')
-    return JsonResponse(list(farms), safe=False)
-
-
-def water_logs(request):
-    """Returns the last 50 watering events for the logs table."""
-    farm_id = request.GET.get('farm_id', 1)
-    logs = WaterLog.objects.filter(farm_id=farm_id, amount__gt=0).order_by('-timestamp')[:50]
-    
-    log_data = []
-    for l in logs:
-        log_data.append({
-            "time": l.timestamp.strftime("%b %d, %I:%M %p"),
-            "amount": f"{l.amount * 1000:.1f}L", # Convert m3 to Liters for display
-            "note": l.note or "Regular Cycle"
-        })
-        
-    return JsonResponse({"logs": log_data})
-
-#--------notipppppppppp_____________
-def send_alert(message, alert_style):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "farm_updates",
-        {
-            "type": "send_notification",
-            "message": message,
-            "notification_type": alert_style # 'red', 'green', or 'blue'
-        }
-    )
-#_______________________LGU__________#
-@lgu_required
-def lgu_farm_detail(request, farm_id):
-    farm = Farm.objects.prefetch_related("blocks").select_related("farmer").get(id=farm_id)
-    blocks = farm.blocks.all()
-
-    return render(request, "lgu_farm_detail.html", {
-        "farm": farm,
-        "blocks": blocks,
     })
     
 #-----sidebar_________________#
@@ -788,9 +1041,8 @@ def lgu_farms(request):
     filter_by = request.GET.get("filter_by", "all")
     location = request.GET.get("location", "").strip()
 
-    farms = Farm.objects.select_related("farmer").prefetch_related("blocks").all()
+    farms = Farm.objects.prefetch_related("farmer", "blocks").all()
 
-    # SEARCH BY CATEGORY
     if search:
         if filter_by == "name":
             farms = farms.filter(name__icontains=search)
@@ -804,7 +1056,7 @@ def lgu_farms(request):
         elif filter_by == "block":
             farms = farms.filter(blocks__name__icontains=search)
 
-        else:  # ALL
+        else:
             farms = farms.filter(
                 Q(name__icontains=search) |
                 Q(location__icontains=search) |
@@ -812,11 +1064,9 @@ def lgu_farms(request):
                 Q(blocks__name__icontains=search)
             )
 
-    # LOCATION FILTER (separate dropdown)
     if location:
         farms = farms.filter(location__iexact=location)
 
-    # REMOVE DUPLICATES (important when filtering by blocks)
     farms = farms.distinct()
 
     locations = Farm.objects.values_list("location", flat=True).distinct()
@@ -829,10 +1079,9 @@ def lgu_farms(request):
         "locations": locations,
     })
     
-    
 @lgu_required
 def lgu_analytics(request):
-    farms = Farm.objects.prefetch_related("blocks").select_related("farmer").all()
+    farms = Farm.objects.prefetch_related("farmer", "blocks").all()
 
     total_farms = farms.count()
     total_blocks = 0
@@ -866,13 +1115,12 @@ def lgu_analytics(request):
         "avg_temp": avg_temp,
     })
     
-    
-
 @lgu_required
 def lgu_logs(request):
     logs = WaterLog.objects.select_related(
         "block",
-        "block__farm",
+        "block__farm"
+    ).prefetch_related(
         "block__farm__farmer"
     ).order_by("-timestamp")[:100]
 
@@ -884,7 +1132,7 @@ def lgu_logs(request):
     #____CRUD LGU_FARMERS____#
 @lgu_required
 def lgu_farm_detail(request, farm_id):
-    farm = Farm.objects.prefetch_related("blocks").select_related("farmer").get(id=farm_id)
+    farm = Farm.objects.prefetch_related("farmer", "blocks").get(id=farm_id)
     blocks = farm.blocks.all()
 
     block_count = blocks.count()
@@ -912,8 +1160,10 @@ def lgu_farm_detail(request, farm_id):
 
 
 @lgu_required
+@lgu_required
 def lgu_farmer_edit(request, farmer_id):
-    farmer = FarmerProfile.objects.get(id=farmer_id)
+    farmer = FarmerProfile.objects.select_related("user").get(id=farmer_id)
+    farms = Farm.objects.all()
 
     if request.method == "POST":
         farmer.full_name = request.POST.get("full_name")
@@ -921,12 +1171,29 @@ def lgu_farmer_edit(request, farmer_id):
         farmer.address = request.POST.get("address")
         farmer.save()
 
+        selected_farm_ids = request.POST.getlist("farms")
+
+        # Clear old farm assignments
+        for farm in Farm.objects.filter(farmer=farmer.user):
+            farm.farmer.remove(farmer.user)
+
+        # Add new farm assignments
+        selected_farms = Farm.objects.filter(id__in=selected_farm_ids)
+
+        for farm in selected_farms:
+            farm.farmer.add(farmer.user)
+
         return redirect("lgu_farmers")
 
-    return render(request, "lgu_farmer_edit.html", {
-        "farmer": farmer
-    })
+    assigned_farm_ids = list(
+        Farm.objects.filter(farmer=farmer.user).values_list("id", flat=True)
+    )
 
+    return render(request, "lgu_farmer_edit.html", {
+        "farmer": farmer,
+        "farms": farms,
+        "assigned_farm_ids": assigned_farm_ids
+    })
 
 @lgu_required
 def lgu_farmer_delete(request, farmer_id):
@@ -1015,5 +1282,108 @@ def lgu_block_detail(request, block_id):
         "temp_status": temp_status,
     })
 
+@lgu_required
+def lgu_add_farm(request):
+    farmer = FarmerProfile.objects.select_related("user").all()
+
+    if request.method == "POST":
+        farm_name = request.POST.get("farm_name")
+        farm_location = request.POST.get("farm_location")
+        farmer_ids = request.POST.getlist("farmer")
+
+        try:
+            block_count = int(request.POST.get("block_count", 1))
+        except ValueError:
+            block_count = 1
+
+        farm = Farm.objects.create(
+            name=farm_name,
+            location=farm_location
+        )
+
+        selected_farmers = FarmerProfile.objects.filter(id__in=farmer_ids)
+
+        for profile in selected_farmers:
+            farm.farmer.add(profile.user)
+
+        for i in range(1, block_count + 1):
+            Block.objects.create(
+                farm=farm,
+                name=f"Block {chr(64 + i)}"
+            )
+
+        return redirect("lgu_farms")
+
+    return render(request, "lgu_add_farm.html", {
+        "farmer": farmer
+    })
+    
+@lgu_required
+def lgu_farm_edit(request, farm_id):
+    farm = Farm.objects.prefetch_related("farmer", "blocks").get(id=farm_id)
+    farmer = FarmerProfile.objects.select_related("user").all()
+
+    if request.method == "POST":
+        farm.name = request.POST.get("farm_name")
+        farm.location = request.POST.get("farm_location")
+        farm.save()
+
+        selected_farmer_ids = request.POST.getlist("farmer")
+
+        farm.farmer.clear()
+
+        selected_farmers = FarmerProfile.objects.filter(id__in=selected_farmer_ids)
+
+        for profile in selected_farmers:
+            farm.farmer.add(profile.user)
+
+        try:
+            new_block_count = int(request.POST.get("block_count", farm.blocks.count()))
+        except ValueError:
+            new_block_count = farm.blocks.count()
+
+        if new_block_count < 1:
+            new_block_count = 1
+
+        current_blocks = list(farm.blocks.all().order_by("id"))
+        current_block_count = len(current_blocks)
+
+        if new_block_count > current_block_count:
+            for i in range(current_block_count + 1, new_block_count + 1):
+                Block.objects.create(
+                    farm=farm,
+                    name=f"Block {chr(64 + i)}"
+                )
+
+        elif new_block_count < current_block_count:
+            blocks_to_delete = current_blocks[new_block_count:]
+            for block in blocks_to_delete:
+                block.delete()
+
+        return redirect("lgu_farms")
+
+    assigned_farmer_ids = list(
+        FarmerProfile.objects.filter(user__in=farm.farmer.all()).values_list("id", flat=True)
+    )
+
+    block_count = farm.blocks.count()
+
+    return render(request, "lgu_farm_edit.html", {
+        "farm": farm,
+        "farmer": farmer,
+        "assigned_farmer_ids": assigned_farmer_ids,
+        "block_count": block_count,
+    })
 
 
+@lgu_required
+def lgu_farm_delete(request, farm_id):
+    farm = Farm.objects.get(id=farm_id)
+
+    if request.method == "POST":
+        farm.delete()
+        return redirect("lgu_farms")
+
+    return render(request, "lgu_farm_delete.html", {
+        "farm": farm
+    })

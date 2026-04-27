@@ -31,4 +31,8 @@ urlpatterns = [
         path("check-lgu-status/", views.check_lgu_status, name="check_lgu_status"),
         
         path("lgu-logout/", views.lgu_logout, name="lgu_logout"),
+        
+        path("lgu/farms/add/", views.lgu_add_farm, name="lgu_add_farm"),
+        path("lgu/farms/<int:farm_id>/edit/", views.lgu_farm_edit, name="lgu_farm_edit"),
+        path("lgu/farms/<int:farm_id>/delete/", views.lgu_farm_delete, name="lgu_farm_delete"),
     ]
