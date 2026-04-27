@@ -624,11 +624,21 @@ def dashboard_router(request):
 
 
 # ================= FARMER UI API ENDPOINTS =================
+@farmer_required
 def get_live_data(request):
     try:
         block_id = request.GET.get("block")
 
-        block = Block.objects.get(id=block_id)
+        if not block_id:
+            return JsonResponse({"error": "Missing block ID"}, status=400)
+
+        block = Block.objects.select_related("farm").filter(
+            id=block_id,
+            farm__farmer=request.user
+        ).first()
+
+        if not block:
+            return JsonResponse({"error": "Block not found or not assigned to this farmer"}, status=403)
 
         latest = block.sensor_readings.first()
 
@@ -646,17 +656,19 @@ def get_live_data(request):
             tank_level = block.water_tank_level
 
         return JsonResponse({
-        "soil": soil,
-        "ph": ph,
-        "temp": temp,
-        "rain": rain,
-        "tank_level": tank_level,
-        "pump": block.pump_status,
-        "mode": block.mode
-})
+            "soil": soil,
+            "ph": ph,
+            "temp": temp,
+            "rain": rain,
+            "tank_level": tank_level,
+            "pump": block.pump_status,
+            "mode": block.mode
+        })
+
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
+@farmer_required
 @csrf_exempt
 def control_pump(request):
     if request.method == "POST":
@@ -666,7 +678,23 @@ def control_pump(request):
             action = data.get("action")
             block_id = data.get("block_id")
 
-            block = Block.objects.get(id=block_id)
+            if not block_id:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Missing block ID"
+                }, status=400)
+
+            block = Block.objects.select_related("farm").filter(
+                id=block_id,
+                farm__farmer=request.user
+            ).first()
+
+            if not block:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Block not found or not assigned to this farmer"
+                }, status=403)
+
             control, _ = PumpControl.objects.get_or_create(block=block)
 
             if action == "toggle_mode":
@@ -748,6 +776,7 @@ def control_pump(request):
         "status": "error",
         "message": "Invalid method"
     }, status=400)
+    
 # ================= LGU ANALYTICS & LOGS =================
 def last_watered(request):
     last = WaterLog.objects.filter(amount__gt=0).last()
@@ -775,14 +804,17 @@ def list_farms(request):
     farms = Farm.objects.all().values("id", "name", "location")
     return JsonResponse(list(farms), safe=False)
 
+@farmer_required
 def water_logs(request):
-    """Returns the latest watering history for the selected block."""
     block_id = request.GET.get("block_id")
 
     logs = WaterLog.objects.select_related(
         "block",
         "block__farm"
     ).order_by("-timestamp")
+
+    if request.user.groups.filter(name="Farmers").exists():
+        logs = logs.filter(block__farm__farmer=request.user)
 
     if block_id:
         logs = logs.filter(block_id=block_id)
@@ -808,7 +840,6 @@ def water_logs(request):
         })
 
     return JsonResponse({"logs": log_data})
-
 def daily_water_count(request):
     farm_id = request.GET.get('farm_id', 1)
     today = now().date()
@@ -1132,8 +1163,14 @@ def lgu_logs(request):
     #____CRUD LGU_FARMERS____#
 @lgu_required
 def lgu_farm_detail(request, farm_id):
-    farm = Farm.objects.prefetch_related("farmer", "blocks").get(id=farm_id)
+    farm = Farm.objects.prefetch_related(
+        "farmer",
+        "blocks",
+        "blocks__sensor_readings"
+    ).get(id=farm_id)
+
     blocks = farm.blocks.all()
+    assigned_farmers = farm.farmer.all()
 
     block_count = blocks.count()
 
@@ -1151,6 +1188,7 @@ def lgu_farm_detail(request, farm_id):
     return render(request, "lgu_farm_detail.html", {
         "farm": farm,
         "blocks": blocks,
+        "assigned_farmers": assigned_farmers,
         "avg_moisture": round(avg_moisture, 1),
         "avg_ph": round(avg_ph, 1),
         "avg_temp": round(avg_temp, 1),
@@ -1158,8 +1196,6 @@ def lgu_farm_detail(request, farm_id):
         "block_count": block_count,
     })
 
-
-@lgu_required
 @lgu_required
 def lgu_farmer_edit(request, farmer_id):
     farmer = FarmerProfile.objects.select_related("user").get(id=farmer_id)

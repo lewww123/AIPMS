@@ -89,11 +89,16 @@
                         <option value="name" {% if filter_by == "name" %}selected{% endif %}>Farm Name</option>
                         <option value="farmer" {% if filter_by == "farmer" %}selected{% endif %}>Farmer</option>
                         <option value="location" {% if filter_by == "location" %}selected{% endif %}>Location</option>
+                        <option value="block" {% if filter_by == "block" %}selected{% endif %}>Block</option>
                     </select>
 
-                    <button type="submit">Search</button>
+                    <button type="submit">
+                        <i class="fas fa-search"></i> Search
+                    </button>
 
-                    <a href="{% url 'lgu_farms' %}" class="btn btn-secondary">Clear</a>
+                    <a href="{% url 'lgu_farms' %}" class="btn btn-secondary">
+                        Clear
+                    </a>
 
                 </form>
             </div>
@@ -115,19 +120,17 @@
                         <td>{{ farm.name }}</td>
 
                         <td>
-                            {% if farm.farmer.all %}
-                                {% for user in farm.farmer.all %}
-                                    {% if user.farmer_profile.full_name %}
-                                        {{ user.farmer_profile.full_name }}
-                                    {% else %}
-                                        {{ user.username }}
-                                    {% endif %}
+                            {% for user in farm.farmer.all %}
+                                {% if user.farmer_profile.full_name %}
+                                    {{ user.farmer_profile.full_name }}
+                                {% else %}
+                                    {{ user.username }}
+                                {% endif %}
 
-                                    {% if not forloop.last %}, {% endif %}
-                                {% endfor %}
-                            {% else %}
+                                {% if not forloop.last %}, {% endif %}
+                            {% empty %}
                                 No Farmer
-                            {% endif %}
+                            {% endfor %}
                         </td>
 
                         <td>{{ farm.location }}</td>
@@ -135,9 +138,17 @@
                         <td>{{ farm.blocks.count }}</td>
 
                         <td class="action-links">
-                            <a href="{% url 'lgu_farm_detail' farm.id %}" class="view">View</a>
-                            <a href="{% url 'lgu_farm_edit' farm.id %}" class="edit">Edit</a>
-                            <a href="{% url 'lgu_farm_delete' farm.id %}" class="delete">Delete</a>
+                            <a href="{% url 'lgu_farm_detail' farm.id %}" class="view">
+                                View
+                            </a>
+
+                            <a href="{% url 'lgu_farm_edit' farm.id %}" class="edit">
+                                Edit / Assign
+                            </a>
+
+                            <a href="{% url 'lgu_farm_delete' farm.id %}" class="delete">
+                                Delete
+                            </a>
                         </td>
                     </tr>
 

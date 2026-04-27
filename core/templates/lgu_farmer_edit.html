@@ -105,74 +105,137 @@
 
 <body>
 
-<div class="container">
+<div class="layout">
 
-    <div class="panel edit-card">
-        <h2>
-            <i class="fas fa-user-edit"></i> Edit Farmer
-        </h2>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-seedling"></i>
+            <div>
+                <strong>AIPMS</strong>
+                <small>Department of Agriculture</small>
+            </div>
+        </div>
 
-        <form method="POST">
-            {% csrf_token %}
+        <div class="sidebar-section">Main</div>
 
-            <label>Full Name</label>
-            <input type="text" name="full_name" value="{{ farmer.full_name }}" required>
+        <a href="{% url 'lgu_dashboard' %}" class="sidebar-link">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
 
-            <label>Contact Number</label>
-            <input type="text" name="contact_number" value="{{ farmer.contact_number }}">
+        <a href="{% url 'lgu_farms' %}" class="sidebar-link">
+            <i class="fas fa-tractor"></i> Farms
+        </a>
 
-            <label>Address</label>
-            <textarea name="address">{{ farmer.address }}</textarea>
+        <a href="{% url 'lgu_farmers' %}" class="sidebar-link active">
+            <i class="fas fa-users"></i> Farmers
+        </a>
 
-            <hr style="margin:15px 0; border:none; border-top:1px solid #e2e8f0;">
+        <a href="{% url 'lgu_analytics' %}" class="sidebar-link">
+            <i class="fas fa-chart-line"></i> Analytics
+        </a>
 
-            <h3 class="section-title">
-                <i class="fas fa-tractor"></i> Farm Assignment
-            </h3>
+        <a href="{% url 'lgu_logs' %}" class="sidebar-link">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
 
-            <label>Assign to Farm/s</label>
+        <div class="sidebar-section">Management</div>
 
-            <div class="farm-dropdown">
-                <button type="button" class="farm-dropdown-btn" id="farmDropdownBtn">
-                    <span id="selectedFarmText">Select farm/s</span>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
+        <a href="{% url 'lgu_create_farmer' %}" class="sidebar-link">
+            <i class="fas fa-user-plus"></i> Create Farmer
+        </a>
 
-                <div class="farm-dropdown-menu" id="farmDropdownMenu">
-                    {% for farm in farms %}
-                        <label class="farm-option">
-                            <input
-                                type="checkbox"
-                                name="farms"
-                                value="{{ farm.id }}"
-                                class="farm-checkbox"
-                                {% if farm.id in assigned_farm_ids %}checked{% endif %}
-                            >
-                            <span>{{ farm.name }} - {{ farm.location }}</span>
-                        </label>
-                    {% empty %}
-                        <div class="no-farm-text">
-                            No farms available. Add a farm first.
+        <a href="{% url 'lgu_logout' %}" class="sidebar-link logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h2>Edit Farmer</h2>
+                <p>Update farmer information and farm assignments</p>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <div class="panel edit-card">
+                <h2>
+                    <i class="fas fa-user-edit"></i> {{ farmer.full_name }}
+                </h2>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" value="{{ farmer.full_name }}" required>
+
+                    <label>Contact Number</label>
+                    <input type="text" name="contact_number" value="{{ farmer.contact_number }}">
+
+                    <label>Address</label>
+                    <textarea name="address">{{ farmer.address }}</textarea>
+
+                    <hr style="margin:15px 0; border:none; border-top:1px solid #e2e8f0;">
+
+                    <h3 class="section-title">
+                        <i class="fas fa-tractor"></i> Farm Assignment
+                    </h3>
+
+                    <label>Assign to Farm/s</label>
+
+                    <div class="farm-dropdown">
+                        <button type="button" class="farm-dropdown-btn" id="farmDropdownBtn">
+                            <span id="selectedFarmText">Select farm/s</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+
+                        <div class="farm-dropdown-menu" id="farmDropdownMenu">
+                            {% for farm in farms %}
+                                <label class="farm-option">
+                                    <input
+                                        type="checkbox"
+                                        name="farms"
+                                        value="{{ farm.id }}"
+                                        class="farm-checkbox"
+                                        {% if farm.id in assigned_farm_ids %}checked{% endif %}
+                                    >
+                                    <span>{{ farm.name }} - {{ farm.location }}</span>
+                                </label>
+                            {% empty %}
+                                <div class="no-farm-text">
+                                    No farms available. Add a farm first.
+                                </div>
+                            {% endfor %}
                         </div>
-                    {% endfor %}
-                </div>
+                    </div>
+
+                    <small class="farm-help-text">
+                        You can assign this farmer to one or more farms.
+                    </small>
+
+                    <div class="form-actions">
+                        <button type="submit">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+
+                        <a href="{% url 'lgu_farmer_detail' farmer.id %}" class="btn btn-secondary">
+                            Back
+                        </a>
+
+                        <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
             </div>
 
-            <small class="farm-help-text">
-                You can assign this farmer to one or more farms.
-            </small>
+        </div>
 
-            <div class="form-actions">
-                <button type="submit">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
-
-                <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">
-                    Cancel
-                </a>
-            </div>
-        </form>
-    </div>
+    </main>
 
 </div>
 

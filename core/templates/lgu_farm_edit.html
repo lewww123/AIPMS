@@ -109,6 +109,7 @@
 
 <div class="layout">
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-brand">
             <i class="fas fa-seedling"></i>
@@ -151,12 +152,13 @@
         </a>
     </aside>
 
+    <!-- MAIN -->
     <main class="main">
 
         <div class="topbar">
             <div>
                 <h2>Edit Farm</h2>
-                <p>Update farm details and assigned farmer/s</p>
+                <p>Update farm details, block count, and assigned farmer/s</p>
             </div>
         </div>
 
@@ -177,10 +179,14 @@
                     <input type="number" name="block_count" min="1" value="{{ block_count }}" required>
 
                     <small class="help-text">
-                    Increasing this number will add new blocks. Decreasing it will delete the extra blocks.
+                        Increasing this number will add new blocks. Decreasing it will delete the extra blocks.
                     </small>
 
                     <hr style="margin:15px 0; border:none; border-top:1px solid #e2e8f0;">
+
+                    <h3 class="section-title">
+                        <i class="fas fa-users"></i> Farmer Assignment
+                    </h3>
 
                     <label>Assign Farmer/s</label>
 
@@ -220,7 +226,13 @@
                     </small>
 
                     <div class="form-actions">
-                        <a href="{% url 'lgu_farms' %}" class="btn-cancel">Cancel</a>
+                        <a href="{% url 'lgu_farm_detail' farm.id %}" class="btn-cancel">
+                            Back
+                        </a>
+
+                        <a href="{% url 'lgu_farms' %}" class="btn-cancel">
+                            Cancel
+                        </a>
 
                         <button type="submit">
                             <i class="fas fa-save"></i> Save Changes

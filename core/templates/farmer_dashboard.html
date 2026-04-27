@@ -207,10 +207,21 @@
         }
 
         .farm-sidebar-title {
-            font-size: 0.75rem;
-            font-weight: 800;
+            font-size: 0.8rem;
+            font-weight: 900;
+            color: var(--primary-dark);
+            margin: 1rem 0 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .farm-sidebar-location {
+            display: block;
             color: var(--text-muted);
-            margin: 1rem 0 0.5rem;
+            font-size: 0.72rem;
+            margin-bottom: 8px;
+            padding-left: 20px;
         }
 
         .block-link {
@@ -253,6 +264,15 @@
 
         .block-link.active i {
             color: white;
+        }
+
+        .empty-sidebar-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px dashed #cbd5e1;
         }
 
         .main-content {
@@ -318,6 +338,7 @@
             grid-template-columns: repeat(3, minmax(240px, 1fr));
             gap: 1.5rem;
         }
+
         .card {
             background: var(--bg-card);
             padding: 1.5rem;
@@ -472,6 +493,10 @@
             .monitoring-title {
                 font-size: 1rem;
             }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -503,7 +528,13 @@
             </div>
         </div>
 
-        <span>{{ request.user.username }}</span>
+        <span>
+            {% if user_obj.farmer_profile.full_name %}
+                {{ user_obj.farmer_profile.full_name }}
+            {% else %}
+                {{ request.user.username }}
+            {% endif %}
+        </span>
 
         <a href="{% url 'farmer_logout' %}" class="logout-btn">
             Logout
@@ -516,16 +547,28 @@
     <aside class="sidebar">
         <div class="sidebar-user">
             <i class="fas fa-user-circle"></i>
-            {{ user_obj.username }}
+
+            {% if user_obj.farmer_profile.full_name %}
+                {{ user_obj.farmer_profile.full_name }}
+            {% else %}
+                {{ user_obj.username }}
+            {% endif %}
+
             <small>Farmer Account</small>
         </div>
 
-        <div class="sidebar-title">Farm Blocks</div>
+        <div class="sidebar-title">My Assigned Farms</div>
 
         {% for farm in farms %}
             <div class="farm-sidebar-title">
+                <i class="fas fa-tractor"></i>
                 {{ farm.name }}
             </div>
+
+            <small class="farm-sidebar-location">
+                <i class="fas fa-location-dot"></i>
+                {{ farm.location }}
+            </small>
 
             {% for block in farm.blocks.all %}
                 <a href="?block={{ block.id }}"
@@ -534,10 +577,14 @@
                     {{ block.name }}
                 </a>
             {% empty %}
-                <p style="font-size: 0.8rem; color: var(--text-muted);">No blocks found.</p>
+                <p class="empty-sidebar-text">
+                    No blocks found under this farm.
+                </p>
             {% endfor %}
         {% empty %}
-            <p style="font-size: 0.8rem; color: var(--text-muted);">No farms found.</p>
+            <p class="empty-sidebar-text">
+                No farms assigned to your account yet.
+            </p>
         {% endfor %}
     </aside>
 
@@ -554,12 +601,24 @@
                     <div class="monitoring-location">
                         <span>
                             <i class="fas fa-tractor"></i>
-                            {{ selected_block.farm.name }}
+                            Farm: {{ selected_block.farm.name }}
+                        </span>
+
+                        <span>
+                            <i class="fas fa-seedling"></i>
+                            Block: {{ selected_block.name }}
                         </span>
 
                         <span>
                             <i class="fas fa-location-dot"></i>
-                            {{ selected_block.farm.location }}
+                            Location: {{ selected_block.farm.location }}
+                        </span>
+                    </div>
+                {% else %}
+                    <div class="monitoring-location">
+                        <span>
+                            <i class="fas fa-circle-info"></i>
+                            No farm or block is assigned to this farmer account.
                         </span>
                     </div>
                 {% endif %}
@@ -920,57 +979,57 @@
         {% endif %}
     }
 
-function fetchWaterLogs() {
-    {% if selected_block %}
-    fetch('/api/water-logs/?block_id={{ selected_block.id }}')
-        .then(res => res.json())
-        .then(data => {
-            const tbody = document.getElementById("water-log-body");
+    function fetchWaterLogs() {
+        {% if selected_block %}
+        fetch('/api/water-logs/?block_id={{ selected_block.id }}')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById("water-log-body");
 
-            if (!tbody) {
-                console.log("water-log-body not found");
-                return;
-            }
+                if (!tbody) {
+                    console.log("water-log-body not found");
+                    return;
+                }
 
-            tbody.innerHTML = "";
+                tbody.innerHTML = "";
 
-            if (!data.logs || data.logs.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);">
-                            No watering history yet.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
+                if (!data.logs || data.logs.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                                No watering history yet.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
 
-            data.logs.forEach(log => {
-                const row = document.createElement("tr");
-                row.style.borderBottom = "1px solid #f1f5f9";
+                data.logs.forEach(log => {
+                    const row = document.createElement("tr");
+                    row.style.borderBottom = "1px solid #f1f5f9";
 
-                row.innerHTML = `
-                    <td style="padding: 12px;">${log.time}</td>
-                    <td style="padding: 12px;">${log.moisture}%</td>
-                    <td style="padding: 12px; text-transform: uppercase;">${log.mode}</td>
-                    <td style="padding: 12px;">${log.note}</td>
-                    <td style="padding: 12px;">${log.amount}</td>
-                `;
+                    row.innerHTML = `
+                        <td style="padding: 12px;">${log.time}</td>
+                        <td style="padding: 12px;">${log.moisture}%</td>
+                        <td style="padding: 12px; text-transform: uppercase;">${log.mode}</td>
+                        <td style="padding: 12px;">${log.note}</td>
+                        <td style="padding: 12px;">${log.amount}</td>
+                    `;
 
-                tbody.appendChild(row);
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.log("Water logs error:", error);
             });
-        })
-        .catch(error => {
-            console.log("Water logs error:", error);
-        });
-    {% endif %}
-}
+        {% endif %}
+    }
 
-fetchLatest();
-fetchWaterLogs();
+    fetchLatest();
+    fetchWaterLogs();
 
-setInterval(fetchLatest, 10000);
-setInterval(fetchWaterLogs, 10000);
+    setInterval(fetchLatest, 10000);
+    setInterval(fetchWaterLogs, 10000);
 </script>
 
 </body>

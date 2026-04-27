@@ -62,7 +62,7 @@
         <div class="topbar">
             <div>
                 <h2>Farmer Accounts</h2>
-                <p>Manage registered farmers and access controls</p>
+                <p>Manage registered farmers, assigned farms, and access controls</p>
             </div>
         </div>
 
@@ -71,7 +71,8 @@
             <!-- SEARCH -->
             <div class="panel">
                 <form method="GET" class="search-row">
-                    <input type="text" name="search"
+                    <input type="text"
+                           name="search"
                            placeholder="Search Farmer ID, name, or contact"
                            value="{{ search }}">
 
@@ -82,7 +83,13 @@
                         <option value="temporary" {% if status == "temporary" %}selected{% endif %}>Temporary PIN</option>
                     </select>
 
-                    <button type="submit">Search</button>
+                    <button type="submit">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+
+                    <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">
+                        Clear
+                    </a>
                 </form>
             </div>
 
@@ -95,7 +102,7 @@
                     </h3>
 
                     <a href="{% url 'lgu_create_farmer' %}" class="btn">
-                        + Create Farmer
+                        <i class="fas fa-user-plus"></i> Create Farmer
                     </a>
                 </div>
 
@@ -106,6 +113,7 @@
                             <th>Full Name</th>
                             <th>Contact</th>
                             <th>Address</th>
+                            <th>Assigned Farms</th>
                             <th>Status</th>
                             <th>PIN Status</th>
                             <th>Actions</th>
@@ -119,6 +127,14 @@
                             <td>{{ farmer.full_name }}</td>
                             <td>{{ farmer.contact_number }}</td>
                             <td>{{ farmer.address }}</td>
+
+                            <td>
+                                {% for farm in farmer.user.farms.all %}
+                                    {{ farm.name }}{% if not forloop.last %}, {% endif %}
+                                {% empty %}
+                                    <span class="text-muted">No farm assigned</span>
+                                {% endfor %}
+                            </td>
 
                             <td>
                                 {% if farmer.is_locked %}
@@ -137,16 +153,27 @@
                             </td>
 
                             <td class="action-links">
-                                <a href="{% url 'lgu_farmer_detail' farmer.id %}" class="view">View</a>
-                                <a href="{% url 'lgu_farmer_edit' farmer.id %}" class="edit">Edit</a>
-                                <a href="{% url 'lgu_farmer_delete' farmer.id %}" class="delete">Delete</a>
-                                <a href="{% url 'lgu_reset_pin' farmer.id %}" class="reset">Reset</a>
+                                <a href="{% url 'lgu_farmer_detail' farmer.id %}" class="view">
+                                    View
+                                </a>
+
+                                <a href="{% url 'lgu_farmer_edit' farmer.id %}" class="edit">
+                                    Edit / Assign
+                                </a>
+
+                                <a href="{% url 'lgu_farmer_delete' farmer.id %}" class="delete">
+                                    Delete
+                                </a>
+
+                                <a href="{% url 'lgu_reset_pin' farmer.id %}" class="reset">
+                                    Reset
+                                </a>
                             </td>
                         </tr>
 
                         {% empty %}
                         <tr>
-                            <td colspan="7">No farmers found.</td>
+                            <td colspan="8">No farmers found.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -161,4 +188,4 @@
 </div>
 
 </body>
-</html> 
+</html>

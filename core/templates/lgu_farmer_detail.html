@@ -39,8 +39,14 @@
         </div>
 
         <br>
-        <a href="{% url 'lgu_farmer_edit' farmer.id %}" class="btn">Edit</a>
-        <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">Back</a>
+
+        <a href="{% url 'lgu_farmer_edit' farmer.id %}" class="btn">
+            Edit / Assign Farms
+        </a>
+
+        <a href="{% url 'lgu_farmers' %}" class="btn btn-secondary">
+            Back
+        </a>
     </div>
 
     <div class="panel">
@@ -52,6 +58,7 @@
                     <th>Farm</th>
                     <th>Location</th>
                     <th>Blocks</th>
+                    <th>Action</th>
                 </tr>
             </thead>
 
@@ -61,10 +68,15 @@
                     <td>{{ farm.name }}</td>
                     <td>{{ farm.location }}</td>
                     <td>{{ farm.blocks.count }}</td>
+                    <td>
+                        <a href="{% url 'lgu_farm_detail' farm.id %}" class="btn">
+                            View Farm
+                        </a>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="3">No farms assigned.</td>
+                    <td colspan="4">No farms assigned.</td>
                 </tr>
                 {% endfor %}
             </tbody>
