@@ -224,6 +224,17 @@
             padding-left: 20px;
         }
 
+        .farm-select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            background: white;
+        }
+
         .block-link {
             width: 100%;
             padding: 14px 14px;
@@ -273,6 +284,21 @@
             padding: 10px;
             border-radius: 10px;
             border: 1px dashed #cbd5e1;
+        }
+
+        .message-box {
+            max-width: 1200px;
+            margin: 15px auto 0;
+        }
+
+        .message-item {
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: #ecfdf5;
+            color: #065f46;
+            font-weight: 700;
+            border: 1px solid #bbf7d0;
         }
 
         .main-content {
@@ -464,6 +490,32 @@
             filter: grayscale(1);
         }
 
+        .threshold-input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            box-sizing: border-box;
+        }
+
+        .threshold-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .threshold-save-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #10b981;
+            color: white;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .dashboard-layout {
                 flex-direction: column;
@@ -542,6 +594,16 @@
     </div>
 </nav>
 
+{% if messages %}
+    <div class="message-box">
+        {% for message in messages %}
+            <div class="message-item">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
 <div class="dashboard-layout">
 
     <aside class="sidebar">
@@ -557,11 +619,10 @@
             <small>Farmer Account</small>
         </div>
 
-            <div class="sidebar-title">My Assigned Farms</div>
+        <div class="sidebar-title">My Assigned Farms</div>
 
         {% if farms %}
-            <select id="farmSelect"
-                    style="width:100%; padding:12px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:15px; font-weight:700; color:var(--text-main); background:white;">
+            <select id="farmSelect" class="farm-select">
                 {% for farm in farms %}
                     <option value="farm-{{ farm.id }}"
                         {% if selected_block and selected_block.farm.id == farm.id %}selected{% endif %}>
@@ -572,8 +633,8 @@
 
             {% for farm in farms %}
                 <div class="farm-block-group"
-                    id="farm-{{ farm.id }}"
-                    style="{% if selected_block and selected_block.farm.id == farm.id %}display:block;{% else %}display:none;{% endif %}">
+                     id="farm-{{ farm.id }}"
+                     style="{% if selected_block and selected_block.farm.id == farm.id %}display:block;{% else %}display:none;{% endif %}">
 
                     <div class="farm-sidebar-title">
                         <i class="fas fa-tractor"></i>
@@ -591,7 +652,7 @@
 
                     {% for block in farm.blocks.all %}
                         <a href="?block={{ block.id }}"
-                        class="block-link {% if selected_block and selected_block.id == block.id %}active{% endif %}">
+                           class="block-link {% if selected_block and selected_block.id == block.id %}active{% endif %}">
                             <i class="fas fa-seedling"></i>
                             {{ block.name }}
                         </a>
@@ -677,7 +738,7 @@
                 <div class="card">
                     <div class="card-header">SOIL MOISTURE <i class="fas fa-tint"></i></div>
                     <div class="value" id="soil">--%</div>
-                    <div class="sub-value">Optimal: 40-70%</div>
+                    <div class="sub-value">Current soil moisture reading</div>
                 </div>
 
                 <div class="card">
@@ -734,6 +795,61 @@
                         <button id="stopBtn" class="btn-action btn-off" onclick="sendCommand('toggle_pump')">STOP</button>
                     </div>
                 </div>
+
+                {% if selected_block %}
+                <div class="card">
+                    <div class="card-header">
+                        THRESHOLD SETTINGS <i class="fas fa-sliders-h"></i>
+                    </div>
+
+                    <form method="POST" action="{% url 'update_thresholds' %}" style="margin-top:10px;">
+                        {% csrf_token %}
+
+                        <input type="hidden" name="block_id" value="{{ selected_block.id }}">
+
+                        <label class="threshold-label">
+                            Critical Level (%)
+                        </label>
+                        <input type="number"
+                               name="critical_threshold"
+                               min="0"
+                               max="100"
+                               value="{{ selected_block.critical_threshold }}"
+                               required
+                               class="threshold-input">
+
+                        <label class="threshold-label">
+                            Dry Level / Start Irrigation (%)
+                        </label>
+                        <input type="number"
+                               name="dry_threshold"
+                               min="0"
+                               max="100"
+                               value="{{ selected_block.dry_threshold }}"
+                               required
+                               class="threshold-input">
+
+                        <label class="threshold-label">
+                            Wet Level / Stop Irrigation (%)
+                        </label>
+                        <input type="number"
+                               name="wet_threshold"
+                               min="0"
+                               max="100"
+                               value="{{ selected_block.wet_threshold }}"
+                               required
+                               class="threshold-input">
+
+                        <button type="submit" class="threshold-save-btn">
+                            Save Thresholds
+                        </button>
+
+                        <div class="sub-value" style="margin-top:8px;">
+                            Rule: Critical &lt; Dry &lt; Wet
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
             </div>
 
             <div class="card" style="margin-top: 2rem; min-height: auto; width: 100%; overflow: hidden;">
@@ -1045,22 +1161,24 @@
             });
         {% endif %}
     }
-        const farmSelect = document.getElementById("farmSelect");
-        const farmGroups = document.querySelectorAll(".farm-block-group");
 
-        if (farmSelect) {
-            farmSelect.addEventListener("change", function () {
-                farmGroups.forEach(group => {
-                    group.style.display = "none";
-                });
+    const farmSelect = document.getElementById("farmSelect");
+    const farmGroups = document.querySelectorAll(".farm-block-group");
 
-                const selectedGroup = document.getElementById(this.value);
-
-                if (selectedGroup) {
-                    selectedGroup.style.display = "block";
-                }
+    if (farmSelect) {
+        farmSelect.addEventListener("change", function () {
+            farmGroups.forEach(group => {
+                group.style.display = "none";
             });
-        }
+
+            const selectedGroup = document.getElementById(this.value);
+
+            if (selectedGroup) {
+                selectedGroup.style.display = "block";
+            }
+        });
+    }
+
     fetchLatest();
     fetchWaterLogs();
 

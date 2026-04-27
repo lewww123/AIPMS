@@ -47,6 +47,8 @@ urlpatterns = [
     path("lgu/farmers/<int:farmer_id>/delete/", views.lgu_farmer_delete, name="lgu_farmer_delete"),
     path("lgu/farmers/<int:farmer_id>/reset-pin/", views.lgu_reset_pin, name="lgu_reset_pin"),
     path("lgu/farmers/<int:farmer_id>/unlock/", views.lgu_unlock_farmer, name="lgu_unlock_farmer"),
+    
+    path('farmer/update-thresholds/', views.update_thresholds, name='update_thresholds'),
  
 ]
 

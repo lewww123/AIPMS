@@ -25,9 +25,6 @@ FLOW_RATE_L_PER_SEC = 600 / 3600
 FULL_VOLUME_LITERS = 1.5
 REDUCED_VOLUME_LITERS = 0.5  # Top-up amount during rain
 
-# Thresholds
-MOISTURE_CRITICAL = 25  # Below this, water even if raining
-MOISTURE_OK = 50        # Above this, skip if raining
 
 def send_alert(message, alert_style):
     print("SEND ALERT CALLED:", message, alert_style)
@@ -314,6 +311,10 @@ def auto_control_logic(block):
     soil = latest_sensor.soil_moisture
     raining = latest_sensor.is_raining
     tank_level = latest_sensor.water_tank_level
+    
+    critical_threshold = block.critical_threshold
+    dry_threshold = block.dry_threshold
+    wet_threshold = block.wet_threshold
 
     hour_check = 6 if is_morning else 16
 
@@ -362,11 +363,11 @@ def auto_control_logic(block):
     status_note = ""
 
     if raining:
-        if soil > MOISTURE_OK:
+        if soil > wet_threshold:
             target_volume = 0
             status_note = "Skipped: Rain detected and soil moisture is sufficient"
 
-        elif soil < MOISTURE_CRITICAL:
+        elif soil < critical_threshold:
             target_volume = REDUCED_VOLUME_LITERS
             status_note = "Reduced irrigation: Rain detected but soil is still critically dry"
 
@@ -375,7 +376,7 @@ def auto_control_logic(block):
             status_note = "Reduced irrigation: Light rain detected but soil still needs water"
 
     else:
-        if soil < MOISTURE_OK:
+        if soil < dry_threshold:
             target_volume = FULL_VOLUME_LITERS
             status_note = "Normal scheduled irrigation"
         else:
@@ -903,7 +904,53 @@ def farmer_dashboard(request):
         'selected_block': selected_block,
         'last_watered': last_watered_time
     })
-    
+
+
+@farmer_required
+def update_thresholds(request):
+    if request.method == "POST":
+        block_id = request.POST.get("block_id")
+
+        block = Block.objects.select_related("farm").filter(
+            id=block_id,
+            farm__farmer=request.user
+        ).first()
+
+        if not block:
+            messages.error(request, "You are not allowed to edit this block.")
+            return redirect("farmer_dashboard")
+
+        try:
+            critical_threshold = int(request.POST.get("critical_threshold"))
+            dry_threshold = int(request.POST.get("dry_threshold"))
+            wet_threshold = int(request.POST.get("wet_threshold"))
+
+            if critical_threshold < 0 or dry_threshold < 0 or wet_threshold < 0:
+                messages.error(request, "Threshold values cannot be negative.")
+                return redirect(f"/farmer-dashboard/?block={block.id}")
+
+            if wet_threshold > 100 or dry_threshold > 100 or critical_threshold > 100:
+                messages.error(request, "Threshold values cannot exceed 100%.")
+                return redirect(f"/farmer-dashboard/?block={block.id}")
+
+            if not critical_threshold < dry_threshold < wet_threshold:
+                messages.error(request, "Threshold must follow: Critical < Dry < Wet.")
+                return redirect(f"/farmer-dashboard/?block={block.id}")
+
+            block.critical_threshold = critical_threshold
+            block.dry_threshold = dry_threshold
+            block.wet_threshold = wet_threshold
+            block.save()
+
+            messages.success(request, "Threshold settings updated successfully.")
+            return redirect(f"/farmer-dashboard/?block={block.id}")
+
+        except ValueError:
+            messages.error(request, "Please enter valid numbers.")
+            return redirect(f"/farmer-dashboard/?block={block.id}")
+
+    return redirect("farmer_dashboard")
+
 #_______________LGU DASHBOARDDDDD________________________#
 
 @lgu_required
@@ -1195,6 +1242,7 @@ def lgu_farm_detail(request, farm_id):
         "active_pumps": active_pumps,
         "block_count": block_count,
     })
+    
 
 @lgu_required
 def lgu_farmer_edit(request, farmer_id):

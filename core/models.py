@@ -28,6 +28,11 @@ class Block(models.Model):
     pump_status = models.BooleanField(default=False)
     
     last_updated = models.DateTimeField(auto_now=True)
+    
+    #ADJUST THRESHOLD
+    dry_threshold = models.IntegerField(default=40)
+    wet_threshold = models.IntegerField(default=70)
+    critical_threshold = models.IntegerField(default=25)
 
     def __str__(self):
         return f"{self.farm.name} - {self.name}"
