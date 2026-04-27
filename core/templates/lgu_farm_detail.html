@@ -44,9 +44,15 @@
             </p>
         </div>
 
-        <a href="{% url 'lgu_farms' %}" class="btn btn-secondary">
-            ← Back
-        </a>
+        <div style="display:flex; gap:10px;">
+            <a href="{% url 'lgu_farm_edit' farm.id %}" class="btn">
+                <i class="fas fa-edit"></i> Edit / Assign
+            </a>
+
+            <a href="{% url 'lgu_farms' %}" class="btn btn-secondary">
+                ← Back
+            </a>
+        </div>
     </div>
 
     <!-- FARM INFO -->
@@ -64,13 +70,19 @@
             </div>
 
             <div class="mini-stat">
-                <strong>Farmer</strong>
+                <strong>Farmer/s</strong>
                 <span>
-                    {% if farm.farmer %}
-                        {{ farm.farmer.farmer_profile.full_name }}
-                    {% else %}
+                    {% for user in farm.farmer.all %}
+                        {% if user.farmer_profile.full_name %}
+                            {{ user.farmer_profile.full_name }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+
+                        {% if not forloop.last %}, {% endif %}
+                    {% empty %}
                         Not Assigned
-                    {% endif %}
+                    {% endfor %}
                 </span>
             </div>
 
