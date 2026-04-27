@@ -557,35 +557,56 @@
             <small>Farmer Account</small>
         </div>
 
-        <div class="sidebar-title">My Assigned Farms</div>
+            <div class="sidebar-title">My Assigned Farms</div>
 
-        {% for farm in farms %}
-            <div class="farm-sidebar-title">
-                <i class="fas fa-tractor"></i>
-                {{ farm.name }}
-            </div>
+        {% if farms %}
+            <select id="farmSelect"
+                    style="width:100%; padding:12px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:15px; font-weight:700; color:var(--text-main); background:white;">
+                {% for farm in farms %}
+                    <option value="farm-{{ farm.id }}"
+                        {% if selected_block and selected_block.farm.id == farm.id %}selected{% endif %}>
+                        {{ farm.name }}
+                    </option>
+                {% endfor %}
+            </select>
 
-            <small class="farm-sidebar-location">
-                <i class="fas fa-location-dot"></i>
-                {{ farm.location }}
-            </small>
+            {% for farm in farms %}
+                <div class="farm-block-group"
+                    id="farm-{{ farm.id }}"
+                    style="{% if selected_block and selected_block.farm.id == farm.id %}display:block;{% else %}display:none;{% endif %}">
 
-            {% for block in farm.blocks.all %}
-                <a href="?block={{ block.id }}"
-                   class="block-link {% if selected_block and selected_block.id == block.id %}active{% endif %}">
-                    <i class="fas fa-seedling"></i>
-                    {{ block.name }}
-                </a>
-            {% empty %}
-                <p class="empty-sidebar-text">
-                    No blocks found under this farm.
-                </p>
+                    <div class="farm-sidebar-title">
+                        <i class="fas fa-tractor"></i>
+                        {{ farm.name }}
+                    </div>
+
+                    <small class="farm-sidebar-location">
+                        <i class="fas fa-location-dot"></i>
+                        {{ farm.location }}
+                    </small>
+
+                    <div class="sidebar-title" style="margin-top:15px;">
+                        Blocks
+                    </div>
+
+                    {% for block in farm.blocks.all %}
+                        <a href="?block={{ block.id }}"
+                        class="block-link {% if selected_block and selected_block.id == block.id %}active{% endif %}">
+                            <i class="fas fa-seedling"></i>
+                            {{ block.name }}
+                        </a>
+                    {% empty %}
+                        <p class="empty-sidebar-text">
+                            No blocks found under this farm.
+                        </p>
+                    {% endfor %}
+                </div>
             {% endfor %}
-        {% empty %}
+        {% else %}
             <p class="empty-sidebar-text">
                 No farms assigned to your account yet.
             </p>
-        {% endfor %}
+        {% endif %}
     </aside>
 
     <main class="main-content">
@@ -1024,7 +1045,22 @@
             });
         {% endif %}
     }
+        const farmSelect = document.getElementById("farmSelect");
+        const farmGroups = document.querySelectorAll(".farm-block-group");
 
+        if (farmSelect) {
+            farmSelect.addEventListener("change", function () {
+                farmGroups.forEach(group => {
+                    group.style.display = "none";
+                });
+
+                const selectedGroup = document.getElementById(this.value);
+
+                if (selectedGroup) {
+                    selectedGroup.style.display = "block";
+                }
+            });
+        }
     fetchLatest();
     fetchWaterLogs();
 
