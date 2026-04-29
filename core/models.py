@@ -78,11 +78,11 @@ class PumpControl(models.Model):
 
 class FarmerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="farmer_profile")
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="farmer_profile")
-    full_name = models.CharField(max_length=100)
-    contact_number = models.CharField(max_length=20, blank=True)
-    address = models.TextField(blank=True)
+    
+    farmer_id = models.CharField(max_length=20, unique=True)
+    full_name = models.CharField(max_length=150)
+    contact_number = models.CharField(max_length=20, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
 
     is_temporary_pin = models.BooleanField(default=True)
     failed_attempts = models.IntegerField(default=0)
