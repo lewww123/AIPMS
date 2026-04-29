@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from core.decorators import lgu_required, farmer_required
-from django.db.models import Avg, Q
+from django.db.models import Avg, Q, Count, Sum
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth.hashers import check_password, make_password
@@ -17,6 +17,7 @@ from functools import wraps
 from core.utils import redirect_by_role
 from django.utils import timezone
 import random
+from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 import re
 
 # --- Constants & Config ---
@@ -857,7 +858,7 @@ def water_logs(request):
 
     for log in logs:
         if log.amount and log.amount > 0:
-            volume_display = f"{log.amount * 1000:.1f}L"
+            volume_display = f"{log.amount * 1000:.1f} L estimated"
         else:
             volume_display = "-"
 
@@ -905,7 +906,7 @@ def soil_history(request):
 def farmer_dashboard(request):
     user_obj = request.user
 
-    farms = user_obj.farms.prefetch_related("blocks")
+    farms = user_obj.farms.prefetch_related("blocks").distinct()
 
     block_id = request.GET.get("block")
 
@@ -923,7 +924,11 @@ def farmer_dashboard(request):
             if selected_block:
                 break
 
-    last_log = WaterLog.objects.filter(amount__gt=0).last()
+    last_log = WaterLog.objects.filter(
+        block__farm__farmer=user_obj,
+        amount__gt=0
+    ).order_by("-timestamp").first()
+    
     last_watered_time = (
         timezone.localtime(last_log.timestamp).strftime("%b %d, %I:%M %p")
         if last_log else "No data yet"
@@ -1098,19 +1103,19 @@ def lgu_dashboard(request):
             "avg_temp": round(avg_temp, 1),
             "status": status,
         })
-        all_alerts = sorted(
-            priority_alerts,
-            key=lambda a: (a["priority"], -a["timestamp"].timestamp())
+    all_alerts = sorted(
+        priority_alerts,
+        key=lambda a: (a["priority"], -a["timestamp"].timestamp())
         )
 
-        top_priority_alerts = all_alerts[:5]
+    top_priority_alerts = all_alerts[:5]
 
-        return render(request, "lgu_dashboard.html", {
-            "farmers": farmers,
-            "farm_overview": farm_overview,
-            "priority_alerts": top_priority_alerts,
-            "all_alerts": all_alerts,
-        })
+    return render(request, "lgu_dashboard.html", {
+        "farmers": farmers,
+        "farm_overview": farm_overview,
+        "priority_alerts": top_priority_alerts,
+        "all_alerts": all_alerts,
+    })
         
 #-----sidebar_________________#
 @lgu_required
@@ -1370,10 +1375,10 @@ def lgu_unlock_farmer(request, farmer_id):
 def lgu_block_detail(request, block_id):
     block = Block.objects.select_related("farm").get(id=block_id)
 
-    # simple analytics logic
-    if block.current_moisture < 35:
+    # Current status
+    if block.current_moisture < block.dry_threshold:
         moisture_status = "Needs Water"
-    elif block.current_moisture > 70:
+    elif block.current_moisture > block.wet_threshold:
         moisture_status = "Too Wet"
     else:
         moisture_status = "Healthy"
@@ -1392,11 +1397,86 @@ def lgu_block_detail(request, block_id):
     else:
         temp_status = "Normal"
 
+    # History logs for this specific block
+    sensor_history = SensorData.objects.filter(
+        block=block
+    ).order_by("-timestamp")[:100]
+
+    water_logs = WaterLog.objects.filter(
+        block=block
+    ).order_by("-timestamp")[:100]
+
+    # Daily analytics
+    daily_analytics = SensorData.objects.filter(block=block).annotate(
+        period=TruncDate("timestamp")
+    ).values("period").annotate(
+        avg_moisture=Avg("soil_moisture"),
+        avg_ph=Avg("ph_level"),
+        avg_temp=Avg("temperature"),
+        avg_tank=Avg("water_tank_level"),
+        rain_count=Count("id", filter=Q(is_raining=True)),
+        pump_count=Count("id", filter=Q(pump_status=True)),
+    ).order_by("-period")[:30]
+
+    # Monthly analytics
+    monthly_analytics = SensorData.objects.filter(block=block).annotate(
+        period=TruncMonth("timestamp")
+    ).values("period").annotate(
+        avg_moisture=Avg("soil_moisture"),
+        avg_ph=Avg("ph_level"),
+        avg_temp=Avg("temperature"),
+        avg_tank=Avg("water_tank_level"),
+        rain_count=Count("id", filter=Q(is_raining=True)),
+        pump_count=Count("id", filter=Q(pump_status=True)),
+    ).order_by("-period")[:12]
+
+    # Yearly analytics
+    yearly_analytics = SensorData.objects.filter(block=block).annotate(
+        period=TruncYear("timestamp")
+    ).values("period").annotate(
+        avg_moisture=Avg("soil_moisture"),
+        avg_ph=Avg("ph_level"),
+        avg_temp=Avg("temperature"),
+        avg_tank=Avg("water_tank_level"),
+        rain_count=Count("id", filter=Q(is_raining=True)),
+        pump_count=Count("id", filter=Q(pump_status=True)),
+    ).order_by("-period")
+
+    # Water usage analytics
+    daily_water = WaterLog.objects.filter(block=block).annotate(
+        period=TruncDate("timestamp")
+    ).values("period").annotate(
+        total_water=Sum("amount"),
+        irrigation_count=Count("id")
+    ).order_by("-period")[:30]
+
+    monthly_water = WaterLog.objects.filter(block=block).annotate(
+        period=TruncMonth("timestamp")
+    ).values("period").annotate(
+        total_water=Sum("amount"),
+        irrigation_count=Count("id")
+    ).order_by("-period")[:12]
+
+    yearly_water = WaterLog.objects.filter(block=block).annotate(
+        period=TruncYear("timestamp")
+    ).values("period").annotate(
+        total_water=Sum("amount"),
+        irrigation_count=Count("id")
+    ).order_by("-period")
+
     return render(request, "lgu_block_detail.html", {
         "block": block,
         "moisture_status": moisture_status,
         "ph_status": ph_status,
         "temp_status": temp_status,
+        "sensor_history": sensor_history,
+        "water_logs": water_logs,
+        "daily_analytics": daily_analytics,
+        "monthly_analytics": monthly_analytics,
+        "yearly_analytics": yearly_analytics,
+        "daily_water": daily_water,
+        "monthly_water": monthly_water,
+        "yearly_water": yearly_water,
     })
 
 @lgu_required

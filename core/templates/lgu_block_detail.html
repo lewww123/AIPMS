@@ -10,9 +10,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        body {
+            background: #f4f7f5;
+        }
+
         .page-wrapper {
             padding: 2rem 3rem;
-            padding-bottom: 7rem;
         }
 
         .header {
@@ -78,47 +81,54 @@
             font-size: 0.75rem;
         }
 
-        .floating-analytics-buttons {
-            position: fixed;
-            right: 25px;
-            bottom: 25px;
+        .analytics-tabs {
             display: flex;
-            flex-direction: column;
             gap: 10px;
-            z-index: 999;
+            margin: 1rem 0;
+            flex-wrap: wrap;
         }
 
-        .floating-analytics-buttons button {
-            border: none;
-            padding: 12px 18px;
+        .analytics-tab-btn {
+            border: 1px solid #bbf7d0;
+            background: #ffffff;
+            color: #166534;
+            padding: 10px 18px;
             border-radius: 999px;
-            background: #15803d;
-            color: white;
             font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+            transition: all 0.2s ease;
         }
 
-        .floating-analytics-buttons button:hover {
-            background: #166534;
+        .analytics-tab-btn:hover {
+            background: #ecfdf5;
+            transform: translateY(-1px);
         }
 
-        .floating-analytics-buttons .close-btn {
-            background: #64748b;
-        }
-
-        .floating-analytics-buttons .close-btn:hover {
-            background: #475569;
+        .analytics-tab-btn.active {
+            background: #15803d;
+            color: white;
+            border-color: #15803d;
+            box-shadow: 0 8px 18px rgba(21, 128, 61, 0.22);
         }
 
         .analytics-section {
             display: none;
         }
 
+        .analytics-section.active {
+            display: block;
+        }
+
+        .help-text {
+            color: #64748b;
+            margin-top: -5px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .page-wrapper {
                 padding: 1rem;
-                padding-bottom: 8rem;
             }
 
             .header {
@@ -126,21 +136,11 @@
                 align-items: flex-start;
                 gap: 10px;
             }
-
-            .floating-analytics-buttons {
-                right: 15px;
-                bottom: 15px;
-            }
-
-            .floating-analytics-buttons button {
-                padding: 10px 14px;
-                font-size: 0.8rem;
-            }
         }
     </style>
 </head>
 
-<body style="background:#f4f7f5;">
+<body>
 
 <div class="page-wrapper">
 
@@ -331,6 +331,10 @@
             <i class="fas fa-clock-rotate-left"></i> Sensor History Logs
         </h3>
 
+        <p class="help-text">
+            This table shows the previous sensor readings recorded for this specific block.
+        </p>
+
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -391,12 +395,16 @@
             <i class="fas fa-droplet"></i> Irrigation / Water Logs
         </h3>
 
+        <p class="help-text">
+            Water used is estimated based on pump flow rate and pump running time.
+        </p>
+
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
                         <th>Timestamp</th>
-                        <th>Water Used</th>
+                        <th>Estimated Water Used</th>
                         <th>Moisture</th>
                         <th>Mode</th>
                         <th>Note</th>
@@ -410,7 +418,9 @@
 
                         <td>
                             {% if log.amount > 0 %}
-                                {{ log.amount }} m³
+                                {{ log.amount|floatformat:4 }} m³
+                                <br>
+                                <small>{{ log.amount|floatformat:4 }} × 1000 L estimated</small>
                             {% else %}
                                 -
                             {% endif %}
@@ -432,182 +442,168 @@
     </div>
 
 
-    <!-- DAILY ANALYTICS -->
-    <div class="panel section-gap analytics-section" id="dailyAnalytics">
+    <!-- PROFESSIONAL ANALYTICS TABS -->
+    <div class="panel section-gap">
         <h3 class="section-title">
-            <i class="fas fa-calendar-day"></i> Daily Analytics
+            <i class="fas fa-chart-line"></i> Block Analytics Summary
         </h3>
 
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Avg Moisture</th>
-                        <th>Avg pH</th>
-                        <th>Avg Temp</th>
-                        <th>Avg Tank</th>
-                        <th>Rain Readings</th>
-                        <th>Pump Active Readings</th>
-                    </tr>
-                </thead>
+        <p class="help-text">
+            View summarized block readings by daily, monthly, or yearly records.
+        </p>
 
-                <tbody>
-                    {% for item in daily_analytics %}
-                    <tr>
-                        <td>{{ item.period|date:"M d, Y" }}</td>
-                        <td>{{ item.avg_moisture|floatformat:1 }}%</td>
-                        <td>{{ item.avg_ph|floatformat:1 }}</td>
-                        <td>{{ item.avg_temp|floatformat:1 }}°C</td>
-                        <td>{{ item.avg_tank|floatformat:1 }}%</td>
-                        <td>{{ item.rain_count }}</td>
-                        <td>{{ item.pump_count }}</td>
-                    </tr>
+        <div class="analytics-tabs">
+            <button type="button" class="analytics-tab-btn active" onclick="showAnalyticsTab('dailyAnalytics', this)">
+                <i class="fas fa-calendar-day"></i> Daily
+            </button>
 
-                    {% empty %}
-                    <tr>
-                        <td colspan="7">No daily analytics available.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <button type="button" class="analytics-tab-btn" onclick="showAnalyticsTab('monthlyAnalytics', this)">
+                <i class="fas fa-calendar-alt"></i> Monthly
+            </button>
+
+            <button type="button" class="analytics-tab-btn" onclick="showAnalyticsTab('yearlyAnalytics', this)">
+                <i class="fas fa-calendar"></i> Yearly
+            </button>
         </div>
-    </div>
 
+        <!-- DAILY ANALYTICS -->
+        <div class="analytics-section active" id="dailyAnalytics">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Avg Moisture</th>
+                            <th>Avg pH</th>
+                            <th>Avg Temp</th>
+                            <th>Avg Tank</th>
+                            <th>Rain Readings</th>
+                            <th>Pump Active Readings</th>
+                        </tr>
+                    </thead>
 
-    <!-- MONTHLY ANALYTICS -->
-    <div class="panel section-gap analytics-section" id="monthlyAnalytics">
-        <h3 class="section-title">
-            <i class="fas fa-calendar-alt"></i> Monthly Analytics
-        </h3>
+                    <tbody>
+                        {% for item in daily_analytics %}
+                        <tr>
+                            <td>{{ item.period|date:"M d, Y" }}</td>
+                            <td>{{ item.avg_moisture|floatformat:1 }}%</td>
+                            <td>{{ item.avg_ph|floatformat:1 }}</td>
+                            <td>{{ item.avg_temp|floatformat:1 }}°C</td>
+                            <td>{{ item.avg_tank|floatformat:1 }}%</td>
+                            <td>{{ item.rain_count }}</td>
+                            <td>{{ item.pump_count }}</td>
+                        </tr>
 
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Month</th>
-                        <th>Avg Moisture</th>
-                        <th>Avg pH</th>
-                        <th>Avg Temp</th>
-                        <th>Avg Tank</th>
-                        <th>Rain Readings</th>
-                        <th>Pump Active Readings</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for item in monthly_analytics %}
-                    <tr>
-                        <td>{{ item.period|date:"F Y" }}</td>
-                        <td>{{ item.avg_moisture|floatformat:1 }}%</td>
-                        <td>{{ item.avg_ph|floatformat:1 }}</td>
-                        <td>{{ item.avg_temp|floatformat:1 }}°C</td>
-                        <td>{{ item.avg_tank|floatformat:1 }}%</td>
-                        <td>{{ item.rain_count }}</td>
-                        <td>{{ item.pump_count }}</td>
-                    </tr>
-
-                    {% empty %}
-                    <tr>
-                        <td colspan="7">No monthly analytics available.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">No daily analytics available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
+        <!-- MONTHLY ANALYTICS -->
+        <div class="analytics-section" id="monthlyAnalytics">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Avg Moisture</th>
+                            <th>Avg pH</th>
+                            <th>Avg Temp</th>
+                            <th>Avg Tank</th>
+                            <th>Rain Readings</th>
+                            <th>Pump Active Readings</th>
+                        </tr>
+                    </thead>
 
-    <!-- YEARLY ANALYTICS -->
-    <div class="panel section-gap analytics-section" id="yearlyAnalytics">
-        <h3 class="section-title">
-            <i class="fas fa-calendar"></i> Yearly Analytics
-        </h3>
+                    <tbody>
+                        {% for item in monthly_analytics %}
+                        <tr>
+                            <td>{{ item.period|date:"F Y" }}</td>
+                            <td>{{ item.avg_moisture|floatformat:1 }}%</td>
+                            <td>{{ item.avg_ph|floatformat:1 }}</td>
+                            <td>{{ item.avg_temp|floatformat:1 }}°C</td>
+                            <td>{{ item.avg_tank|floatformat:1 }}%</td>
+                            <td>{{ item.rain_count }}</td>
+                            <td>{{ item.pump_count }}</td>
+                        </tr>
 
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Year</th>
-                        <th>Avg Moisture</th>
-                        <th>Avg pH</th>
-                        <th>Avg Temp</th>
-                        <th>Avg Tank</th>
-                        <th>Rain Readings</th>
-                        <th>Pump Active Readings</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for item in yearly_analytics %}
-                    <tr>
-                        <td>{{ item.period|date:"Y" }}</td>
-                        <td>{{ item.avg_moisture|floatformat:1 }}%</td>
-                        <td>{{ item.avg_ph|floatformat:1 }}</td>
-                        <td>{{ item.avg_temp|floatformat:1 }}°C</td>
-                        <td>{{ item.avg_tank|floatformat:1 }}%</td>
-                        <td>{{ item.rain_count }}</td>
-                        <td>{{ item.pump_count }}</td>
-                    </tr>
-
-                    {% empty %}
-                    <tr>
-                        <td colspan="7">No yearly analytics available.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">No monthly analytics available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        <!-- YEARLY ANALYTICS -->
+        <div class="analytics-section" id="yearlyAnalytics">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Avg Moisture</th>
+                            <th>Avg pH</th>
+                            <th>Avg Temp</th>
+                            <th>Avg Tank</th>
+                            <th>Rain Readings</th>
+                            <th>Pump Active Readings</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in yearly_analytics %}
+                        <tr>
+                            <td>{{ item.period|date:"Y" }}</td>
+                            <td>{{ item.avg_moisture|floatformat:1 }}%</td>
+                            <td>{{ item.avg_ph|floatformat:1 }}</td>
+                            <td>{{ item.avg_temp|floatformat:1 }}°C</td>
+                            <td>{{ item.avg_tank|floatformat:1 }}%</td>
+                            <td>{{ item.rain_count }}</td>
+                            <td>{{ item.pump_count }}</td>
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">No yearly analytics available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
 </div>
-
-
-<!-- FLOATING ANALYTICS BUTTONS -->
-<div class="floating-analytics-buttons">
-    <button onclick="showAnalytics('dailyAnalytics')">
-        Daily
-    </button>
-
-    <button onclick="showAnalytics('monthlyAnalytics')">
-        Monthly
-    </button>
-
-    <button onclick="showAnalytics('yearlyAnalytics')">
-        Yearly
-    </button>
-
-    <button class="close-btn" onclick="hideAnalytics()">
-        Hide
-    </button>
-</div>
-
 
 <script>
-function showAnalytics(sectionId) {
+function showAnalyticsTab(sectionId, button) {
     const sections = document.querySelectorAll(".analytics-section");
+    const buttons = document.querySelectorAll(".analytics-tab-btn");
 
     sections.forEach(section => {
-        section.style.display = "none";
+        section.classList.remove("active");
+    });
+
+    buttons.forEach(btn => {
+        btn.classList.remove("active");
     });
 
     const selectedSection = document.getElementById(sectionId);
 
     if (selectedSection) {
-        selectedSection.style.display = "block";
-        selectedSection.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
+        selectedSection.classList.add("active");
     }
-}
 
-function hideAnalytics() {
-    const sections = document.querySelectorAll(".analytics-section");
-
-    sections.forEach(section => {
-        section.style.display = "none";
-    });
+    button.classList.add("active");
 }
 </script>
 

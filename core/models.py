@@ -62,6 +62,10 @@ class WaterLog(models.Model):
     mode = models.CharField(max_length=10, default="auto")
     note = models.CharField(max_length=100, blank=True, null=True)
 
+    @property
+    def estimated_liters(self):
+        return self.amount * 1000
+
     def __str__(self):
         return f"{self.block.farm.name} - {self.block.name} - {self.amount}m3"
     
