@@ -1097,18 +1097,19 @@ def lgu_dashboard(request):
             "avg_temp": round(avg_temp, 1),
             "status": status,
         })
+        all_alerts = sorted(
+            priority_alerts,
+            key=lambda a: (a["priority"], -a["timestamp"].timestamp())
+        )
 
-    priority_alerts = sorted(
-        priority_alerts,
-        key=lambda a: (a["priority"], -a["timestamp"].timestamp())
-    )[:5]
+        top_priority_alerts = all_alerts[:5]
 
-    return render(request, "lgu_dashboard.html", {
-        "farmers": farmers,
-        "farm_overview": farm_overview,
-        "priority_alerts": priority_alerts,
-    })
-    
+        return render(request, "lgu_dashboard.html", {
+            "farmers": farmers,
+            "farm_overview": farm_overview,
+            "priority_alerts": top_priority_alerts,
+            "all_alerts": all_alerts,
+        })
 #-----sidebar_________________#
 @lgu_required
 def lgu_farmers(request):
