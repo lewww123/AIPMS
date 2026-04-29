@@ -1,9 +1,10 @@
 {% load static %}
+{% load tz %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AIPMS| Block Analytics</title>
+    <title>AIPMS | Block Analytics</title>
 
     <link rel="stylesheet" href="{% static 'css/lgu.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,6 +20,62 @@
             align-items: center;
             margin-bottom: 1.5rem;
         }
+
+        .section-gap {
+            margin-top: 1.5rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+
+        .badge-green {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 
@@ -26,12 +83,11 @@
 
 <div class="page-wrapper">
 
-    <!-- HEADER -->
     <div class="header">
         <div>
             <h2>{{ block.name }}</h2>
             <p style="color:#64748b;">
-                {{ block.farm.name }} - Block Analytics
+                {{ block.farm.name }} - Block Analytics, History Logs, and Sensor Records
             </p>
         </div>
 
@@ -40,22 +96,53 @@
         </a>
     </div>
 
-    <!-- SUMMARY -->
+    <!-- CURRENT SUMMARY -->
     <div class="summary-grid">
 
         <div class="summary-card">
             <div class="summary-label">Moisture</div>
             <div class="summary-value">{{ block.current_moisture }}%</div>
+            <span class="badge {% if moisture_status == 'Healthy' %}badge-green{% elif moisture_status == 'Needs Water' %}badge-red{% else %}badge-blue{% endif %}">
+                {{ moisture_status }}
+            </span>
         </div>
 
         <div class="summary-card">
             <div class="summary-label">pH</div>
             <div class="summary-value">{{ block.current_ph }}</div>
+            <span class="badge {% if ph_status == 'Neutral' %}badge-green{% else %}badge-yellow{% endif %}">
+                {{ ph_status }}
+            </span>
         </div>
 
         <div class="summary-card">
             <div class="summary-label">Temperature</div>
             <div class="summary-value">{{ block.current_temp }}°C</div>
+            <span class="badge {% if temp_status == 'Normal' %}badge-green{% else %}badge-yellow{% endif %}">
+                {{ temp_status }}
+            </span>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">Water Tank</div>
+            <div class="summary-value">{{ block.water_tank_level }}%</div>
+            {% if block.water_tank_level <= 20 %}
+                <span class="badge badge-red">Low</span>
+            {% else %}
+                <span class="badge badge-green">Sufficient</span>
+            {% endif %}
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">Rain</div>
+            <div class="summary-value">
+                {% if block.is_raining %}YES{% else %}NO{% endif %}
+            </div>
+            {% if block.is_raining %}
+                <span class="badge badge-blue">Raining</span>
+            {% else %}
+                <span class="badge badge-green">Clear</span>
+            {% endif %}
         </div>
 
         <div class="summary-card">
@@ -63,6 +150,11 @@
             <div class="summary-value">
                 {% if block.pump_status %}ON{% else %}OFF{% endif %}
             </div>
+            {% if block.pump_status %}
+                <span class="badge badge-green">{{ block.mode|title }}</span>
+            {% else %}
+                <span class="badge badge-red">{{ block.mode|title }}</span>
+            {% endif %}
         </div>
 
     </div>
@@ -89,6 +181,11 @@
                 <strong>Temperature</strong>
                 <span>{{ temp_status }}</span>
             </div>
+
+            <div class="mini-stat">
+                <strong>Tank Level</strong>
+                <span>{{ block.water_tank_level }}%</span>
+            </div>
         </div>
 
         <div class="panel">
@@ -99,9 +196,9 @@
             <div class="mini-stat">
                 <strong>Irrigation</strong>
                 <span>
-                    {% if block.current_moisture < 35 %}
+                    {% if block.current_moisture < block.dry_threshold %}
                         Increase watering
-                    {% elif block.current_moisture > 70 %}
+                    {% elif block.current_moisture > block.wet_threshold %}
                         Reduce watering
                     {% else %}
                         Maintain level
@@ -122,8 +219,239 @@
                 </span>
             </div>
 
+            <div class="mini-stat">
+                <strong>Water Tank</strong>
+                <span>
+                    {% if block.water_tank_level <= 20 %}
+                        Refill tank
+                    {% else %}
+                        Water level is sufficient
+                    {% endif %}
+                </span>
+            </div>
         </div>
 
+    </div>
+
+    <!-- SENSOR HISTORY -->
+    <div class="panel section-gap">
+        <h3 class="section-title">
+            <i class="fas fa-clock-rotate-left"></i> Sensor History Logs
+        </h3>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Moisture</th>
+                        <th>pH</th>
+                        <th>Temperature</th>
+                        <th>Rain</th>
+                        <th>Tank Level</th>
+                        <th>Pump</th>
+                        <th>Mode</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for data in sensor_history %}
+                    <tr>
+                        <td>{{ data.timestamp|localtime|date:"M d, Y h:i A" }}</td>
+                        <td>{{ data.soil_moisture }}%</td>
+                        <td>{{ data.ph_level }}</td>
+                        <td>{{ data.temperature }}°C</td>
+                        <td>
+                            {% if data.is_raining %}
+                                <span class="badge badge-blue">Raining</span>
+                            {% else %}
+                                <span class="badge badge-green">Clear</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ data.water_tank_level }}%</td>
+                        <td>
+                            {% if data.pump_status %}
+                                <span class="badge badge-green">ON</span>
+                            {% else %}
+                                <span class="badge badge-red">OFF</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ data.mode|title }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8">No sensor history found for this block.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- WATER LOGS -->
+    <div class="panel section-gap">
+        <h3 class="section-title">
+            <i class="fas fa-droplet"></i> Irrigation / Water Logs
+        </h3>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Water Used</th>
+                        <th>Moisture</th>
+                        <th>Mode</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for log in water_logs %}
+                    <tr>
+                        <td>{{ log.timestamp|localtime|date:"M d, Y h:i A" }}</td>
+                        <td>
+                            {% if log.amount > 0 %}
+                                {{ log.amount }} m³
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ log.moisture_at_time }}%</td>
+                        <td>{{ log.mode|title }}</td>
+                        <td>{{ log.note|default:"Regular cycle" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No water logs found for this block.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- DAILY ANALYTICS -->
+    <div class="panel section-gap">
+        <h3 class="section-title">
+            <i class="fas fa-calendar-day"></i> Daily Analytics
+        </h3>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Avg Moisture</th>
+                        <th>Avg pH</th>
+                        <th>Avg Temp</th>
+                        <th>Avg Tank</th>
+                        <th>Rain Readings</th>
+                        <th>Pump Active Readings</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in daily_analytics %}
+                    <tr>
+                        <td>{{ item.period|date:"M d, Y" }}</td>
+                        <td>{{ item.avg_moisture|floatformat:1 }}%</td>
+                        <td>{{ item.avg_ph|floatformat:1 }}</td>
+                        <td>{{ item.avg_temp|floatformat:1 }}°C</td>
+                        <td>{{ item.avg_tank|floatformat:1 }}%</td>
+                        <td>{{ item.rain_count }}</td>
+                        <td>{{ item.pump_count }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">No daily analytics available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MONTHLY ANALYTICS -->
+    <div class="panel section-gap">
+        <h3 class="section-title">
+            <i class="fas fa-calendar-alt"></i> Monthly Analytics
+        </h3>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Avg Moisture</th>
+                        <th>Avg pH</th>
+                        <th>Avg Temp</th>
+                        <th>Avg Tank</th>
+                        <th>Rain Readings</th>
+                        <th>Pump Active Readings</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in monthly_analytics %}
+                    <tr>
+                        <td>{{ item.period|date:"F Y" }}</td>
+                        <td>{{ item.avg_moisture|floatformat:1 }}%</td>
+                        <td>{{ item.avg_ph|floatformat:1 }}</td>
+                        <td>{{ item.avg_temp|floatformat:1 }}°C</td>
+                        <td>{{ item.avg_tank|floatformat:1 }}%</td>
+                        <td>{{ item.rain_count }}</td>
+                        <td>{{ item.pump_count }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">No monthly analytics available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- YEARLY ANALYTICS -->
+    <div class="panel section-gap">
+        <h3 class="section-title">
+            <i class="fas fa-calendar"></i> Yearly Analytics
+        </h3>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Avg Moisture</th>
+                        <th>Avg pH</th>
+                        <th>Avg Temp</th>
+                        <th>Avg Tank</th>
+                        <th>Rain Readings</th>
+                        <th>Pump Active Readings</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in yearly_analytics %}
+                    <tr>
+                        <td>{{ item.period|date:"Y" }}</td>
+                        <td>{{ item.avg_moisture|floatformat:1 }}%</td>
+                        <td>{{ item.avg_ph|floatformat:1 }}</td>
+                        <td>{{ item.avg_temp|floatformat:1 }}°C</td>
+                        <td>{{ item.avg_tank|floatformat:1 }}%</td>
+                        <td>{{ item.rain_count }}</td>
+                        <td>{{ item.pump_count }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">No yearly analytics available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>
