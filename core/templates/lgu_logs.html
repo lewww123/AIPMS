@@ -1,4 +1,5 @@
 {% load static %}
+{% load tz %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,19 +92,23 @@
                     <tbody>
                         {% for log in logs %}
                         <tr>
-                            <td>{{ log.timestamp|date:"M d, H:i" }}</td>
+                            <td>{{ log.timestamp|localtime|date:"M d, h:i A" }}</td>
 
                             <td>{{ log.block.farm.name }}</td>
 
                             <td>{{ log.block.name }}</td>
 
-                            <td>
-                                {% if log.block.farm.farmer %}
-                                    {{ log.block.farm.farmer.farmer_profile.full_name }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </td>
+                                <td>
+                                    {% for farmer in log.block.farm.farmer.all %}
+                                        {% if farmer.farmer_profile %}
+                                            {{ farmer.farmer_profile.full_name }}{% if not forloop.last %}, {% endif %}
+                                        {% else %}
+                                            {{ farmer.username }}{% if not forloop.last %}, {% endif %}
+                                        {% endif %}
+                                    {% empty %}
+                                        N/A
+                                    {% endfor %}
+                                </td>
 
                             <td>{{ log.amount }} m³</td>
 

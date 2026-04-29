@@ -699,8 +699,9 @@ def get_live_data(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
-@farmer_required
+
 @csrf_exempt
+@farmer_required
 def control_pump(request):
     if request.method == "POST":
         try:
@@ -861,7 +862,7 @@ def water_logs(request):
             volume_display = "-"
 
         log_data.append({
-            "time": log.timestamp.strftime("%b %d, %I:%M %p"),
+            "time": timezone.localtime(log.timestamp).strftime("%b %d, %I:%M %p"),
             "farm": log.block.farm.name if log.block and log.block.farm else "Unknown Farm",
             "block": log.block.name if log.block else "Unknown Block",
             "moisture": log.moisture_at_time if log.moisture_at_time is not None else "-",
@@ -924,7 +925,7 @@ def farmer_dashboard(request):
 
     last_log = WaterLog.objects.filter(amount__gt=0).last()
     last_watered_time = (
-        last_log.timestamp.strftime("%b %d, %I:%M %p")
+        timezone.localtime(last_log.timestamp).strftime("%b %d, %I:%M %p")
         if last_log else "No data yet"
     )
 
@@ -1110,6 +1111,7 @@ def lgu_dashboard(request):
             "priority_alerts": top_priority_alerts,
             "all_alerts": all_alerts,
         })
+        
 #-----sidebar_________________#
 @lgu_required
 def lgu_farmers(request):

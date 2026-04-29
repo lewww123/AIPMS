@@ -1,4 +1,6 @@
 {% load static %}
+{% load tz %}
+
 <link rel="manifest" href="{% static 'manifest.json' %}">
 <meta name="theme-color" content="#15803d">
 <!DOCTYPE html>
@@ -457,17 +459,17 @@
                 {% if alert.type == "danger" %}
                     <div class="alert-box alert-danger">
                         ⚠ {{ alert.message }}<br>
-                        <small>{{ alert.timestamp|date:"M d, Y h:i A" }}</small>
+                        <small>{{ alert.timestamp|localtime|date:"M d, Y h:i A" }}</small>
                     </div>
                 {% elif alert.type == "warning" %}
                     <div class="alert-box alert-warning">
                         ⚠ {{ alert.message }}<br>
-                        <small>{{ alert.timestamp|date:"M d, Y h:i A" }}</small>
+                        <small>{{ alert.timestamp|localtime|date:"M d, Y h:i A" }}</small>
                     </div>
                 {% else %}
                     <div class="alert-box alert-info">
                         ℹ {{ alert.message }}<br>
-                        <small>{{ alert.timestamp|date:"M d, Y h:i A" }}</small>
+                        <small>{{ alert.timestamp|localtime|date:"M d, Y h:i A" }}</small>
                     </div>
                 {% endif %}
             {% empty %}
@@ -508,7 +510,7 @@
 
                             {{ alert.message }}
 
-                            <small>{{ alert.timestamp|date:"M d, Y h:i A" }}</small>
+                            <small>{{ alert.timestamp|localtime|date:"M d, Y h:i A" }}</small>
                         </div>
                     {% empty %}
                         <div class="alert-box alert-good">
