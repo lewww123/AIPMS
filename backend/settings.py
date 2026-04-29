@@ -55,6 +55,9 @@ INSTALLED_APPS = [
     "backend",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://aipms-n38i.onrender.com",
+]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -117,6 +120,7 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Manila'
+
 USE_I18N = True
 
 USE_TZ = True
