@@ -149,9 +149,18 @@ def check_lgu_status(request):
         return JsonResponse({"status": "User not found"})
 #____________________LGU GAWA ACCOUNT_______________#
 def generate_farmer_id():
-    count = FarmerProfile.objects.count() + 1
-    return f"F{1000 + count}"
+    number = 1001
 
+    while True:
+        farmer_id = f"F{number}"
+
+        if (
+            not FarmerProfile.objects.filter(farmer_id=farmer_id).exists()
+            and not User.objects.filter(username=farmer_id).exists()
+        ):
+            return farmer_id
+
+        number += 1
 
 def generate_pin():
     return str(random.randint(1000, 9999))
