@@ -72,7 +72,7 @@
         <h2>LGU Login</h2>
 
         <!-- LOGIN -->
-        <form method="POST">
+        <form method="POST" action="{% url 'lgu_login' %}">
             {% csrf_token %}
 
             <input type="text" name="username" placeholder="Username" required>
