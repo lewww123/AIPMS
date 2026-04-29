@@ -25,7 +25,7 @@ FLOW_RATE_L_PER_SEC = 600 / 3600
 FULL_VOLUME_LITERS = 1.5
 REDUCED_VOLUME_LITERS = 0.5  # Top-up amount during rain
 
-
+#notification
 def send_alert(message, alert_style):
     print("SEND ALERT CALLED:", message, alert_style)
 
@@ -157,14 +157,34 @@ def generate_pin():
     return str(random.randint(1000, 9999))
 
 
+@lgu_required
 def lgu_create_farmer(request):
     farms = Farm.objects.all()
 
     if request.method == "POST":
-        full_name = request.POST.get("full_name")
-        contact_number = request.POST.get("contact_number")
-        address = request.POST.get("address")
+        full_name = request.POST.get("full_name", "").strip()
+        contact_number = request.POST.get("contact_number", "").strip()
+        address = request.POST.get("address", "").strip()
         selected_farm_ids = request.POST.getlist("farms")
+
+        existing_farmer = FarmerProfile.objects.filter(
+            full_name__iexact=full_name,
+            contact_number=contact_number
+        ).first()
+
+        if existing_farmer:
+            selected_farms = Farm.objects.filter(id__in=selected_farm_ids)
+
+            for farm in selected_farms:
+                if not farm.farmer.filter(id=existing_farmer.user.id).exists():
+                    farm.farmer.add(existing_farmer.user)
+
+            messages.success(
+                request,
+                f"{existing_farmer.full_name} already has Farmer ID {existing_farmer.farmer_id}. Selected farms were assigned to the existing account."
+            )
+
+            return redirect("lgu_farmer_detail", farmer_id=existing_farmer.id)
 
         farmer_id = generate_farmer_id()
         pin = generate_pin()
@@ -191,7 +211,8 @@ def lgu_create_farmer(request):
         selected_farms = Farm.objects.filter(id__in=selected_farm_ids)
 
         for farm in selected_farms:
-            farm.farmer.add(user)
+            if not farm.farmer.filter(id=user.id).exists():
+                farm.farmer.add(user)
 
         return render(request, "lgu_farmer_created.html", {
             "farmer_id": farmer_id,
