@@ -12,6 +12,7 @@
     <style>
         .page-wrapper {
             padding: 2rem 3rem;
+            padding-bottom: 7rem;
         }
 
         .header {
@@ -76,6 +77,66 @@
             text-transform: uppercase;
             font-size: 0.75rem;
         }
+
+        .floating-analytics-buttons {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 999;
+        }
+
+        .floating-analytics-buttons button {
+            border: none;
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: #15803d;
+            color: white;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+        }
+
+        .floating-analytics-buttons button:hover {
+            background: #166534;
+        }
+
+        .floating-analytics-buttons .close-btn {
+            background: #64748b;
+        }
+
+        .floating-analytics-buttons .close-btn:hover {
+            background: #475569;
+        }
+
+        .analytics-section {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .page-wrapper {
+                padding: 1rem;
+                padding-bottom: 8rem;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .floating-analytics-buttons {
+                right: 15px;
+                bottom: 15px;
+            }
+
+            .floating-analytics-buttons button {
+                padding: 10px 14px;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 
@@ -83,10 +144,11 @@
 
 <div class="page-wrapper">
 
+    <!-- HEADER -->
     <div class="header">
         <div>
-            <h2>{{ block.name }}</h2>
-            <p style="color:#64748b;">
+            <h2 style="margin-bottom:5px;">{{ block.name }}</h2>
+            <p style="color:#64748b; margin:0;">
                 {{ block.farm.name }} - Block Analytics, History Logs, and Sensor Records
             </p>
         </div>
@@ -102,6 +164,7 @@
         <div class="summary-card">
             <div class="summary-label">Moisture</div>
             <div class="summary-value">{{ block.current_moisture }}%</div>
+
             <span class="badge {% if moisture_status == 'Healthy' %}badge-green{% elif moisture_status == 'Needs Water' %}badge-red{% else %}badge-blue{% endif %}">
                 {{ moisture_status }}
             </span>
@@ -110,6 +173,7 @@
         <div class="summary-card">
             <div class="summary-label">pH</div>
             <div class="summary-value">{{ block.current_ph }}</div>
+
             <span class="badge {% if ph_status == 'Neutral' %}badge-green{% else %}badge-yellow{% endif %}">
                 {{ ph_status }}
             </span>
@@ -118,6 +182,7 @@
         <div class="summary-card">
             <div class="summary-label">Temperature</div>
             <div class="summary-value">{{ block.current_temp }}°C</div>
+
             <span class="badge {% if temp_status == 'Normal' %}badge-green{% else %}badge-yellow{% endif %}">
                 {{ temp_status }}
             </span>
@@ -126,6 +191,7 @@
         <div class="summary-card">
             <div class="summary-label">Water Tank</div>
             <div class="summary-value">{{ block.water_tank_level }}%</div>
+
             {% if block.water_tank_level <= 20 %}
                 <span class="badge badge-red">Low</span>
             {% else %}
@@ -136,8 +202,13 @@
         <div class="summary-card">
             <div class="summary-label">Rain</div>
             <div class="summary-value">
-                {% if block.is_raining %}YES{% else %}NO{% endif %}
+                {% if block.is_raining %}
+                    YES
+                {% else %}
+                    NO
+                {% endif %}
             </div>
+
             {% if block.is_raining %}
                 <span class="badge badge-blue">Raining</span>
             {% else %}
@@ -148,8 +219,13 @@
         <div class="summary-card">
             <div class="summary-label">Pump</div>
             <div class="summary-value">
-                {% if block.pump_status %}ON{% else %}OFF{% endif %}
+                {% if block.pump_status %}
+                    ON
+                {% else %}
+                    OFF
+                {% endif %}
             </div>
+
             {% if block.pump_status %}
                 <span class="badge badge-green">{{ block.mode|title }}</span>
             {% else %}
@@ -185,6 +261,17 @@
             <div class="mini-stat">
                 <strong>Tank Level</strong>
                 <span>{{ block.water_tank_level }}%</span>
+            </div>
+
+            <div class="mini-stat">
+                <strong>Rain Status</strong>
+                <span>
+                    {% if block.is_raining %}
+                        Rain detected
+                    {% else %}
+                        Clear skies
+                    {% endif %}
+                </span>
             </div>
         </div>
 
@@ -229,6 +316,11 @@
                     {% endif %}
                 </span>
             </div>
+
+            <div class="mini-stat">
+                <strong>Pump Mode</strong>
+                <span>{{ block.mode|title }}</span>
+            </div>
         </div>
 
     </div>
@@ -261,6 +353,7 @@
                         <td>{{ data.soil_moisture }}%</td>
                         <td>{{ data.ph_level }}</td>
                         <td>{{ data.temperature }}°C</td>
+
                         <td>
                             {% if data.is_raining %}
                                 <span class="badge badge-blue">Raining</span>
@@ -268,7 +361,9 @@
                                 <span class="badge badge-green">Clear</span>
                             {% endif %}
                         </td>
+
                         <td>{{ data.water_tank_level }}%</td>
+
                         <td>
                             {% if data.pump_status %}
                                 <span class="badge badge-green">ON</span>
@@ -276,8 +371,10 @@
                                 <span class="badge badge-red">OFF</span>
                             {% endif %}
                         </td>
+
                         <td>{{ data.mode|title }}</td>
                     </tr>
+
                     {% empty %}
                     <tr>
                         <td colspan="8">No sensor history found for this block.</td>
@@ -310,6 +407,7 @@
                     {% for log in water_logs %}
                     <tr>
                         <td>{{ log.timestamp|localtime|date:"M d, Y h:i A" }}</td>
+
                         <td>
                             {% if log.amount > 0 %}
                                 {{ log.amount }} m³
@@ -317,10 +415,12 @@
                                 -
                             {% endif %}
                         </td>
+
                         <td>{{ log.moisture_at_time }}%</td>
                         <td>{{ log.mode|title }}</td>
                         <td>{{ log.note|default:"Regular cycle" }}</td>
                     </tr>
+
                     {% empty %}
                     <tr>
                         <td colspan="5">No water logs found for this block.</td>
@@ -331,8 +431,9 @@
         </div>
     </div>
 
+
     <!-- DAILY ANALYTICS -->
-    <div class="panel section-gap">
+    <div class="panel section-gap analytics-section" id="dailyAnalytics">
         <h3 class="section-title">
             <i class="fas fa-calendar-day"></i> Daily Analytics
         </h3>
@@ -362,6 +463,7 @@
                         <td>{{ item.rain_count }}</td>
                         <td>{{ item.pump_count }}</td>
                     </tr>
+
                     {% empty %}
                     <tr>
                         <td colspan="7">No daily analytics available.</td>
@@ -372,8 +474,9 @@
         </div>
     </div>
 
+
     <!-- MONTHLY ANALYTICS -->
-    <div class="panel section-gap">
+    <div class="panel section-gap analytics-section" id="monthlyAnalytics">
         <h3 class="section-title">
             <i class="fas fa-calendar-alt"></i> Monthly Analytics
         </h3>
@@ -403,6 +506,7 @@
                         <td>{{ item.rain_count }}</td>
                         <td>{{ item.pump_count }}</td>
                     </tr>
+
                     {% empty %}
                     <tr>
                         <td colspan="7">No monthly analytics available.</td>
@@ -413,8 +517,9 @@
         </div>
     </div>
 
+
     <!-- YEARLY ANALYTICS -->
-    <div class="panel section-gap">
+    <div class="panel section-gap analytics-section" id="yearlyAnalytics">
         <h3 class="section-title">
             <i class="fas fa-calendar"></i> Yearly Analytics
         </h3>
@@ -444,6 +549,7 @@
                         <td>{{ item.rain_count }}</td>
                         <td>{{ item.pump_count }}</td>
                     </tr>
+
                     {% empty %}
                     <tr>
                         <td colspan="7">No yearly analytics available.</td>
@@ -455,6 +561,55 @@
     </div>
 
 </div>
+
+
+<!-- FLOATING ANALYTICS BUTTONS -->
+<div class="floating-analytics-buttons">
+    <button onclick="showAnalytics('dailyAnalytics')">
+        Daily
+    </button>
+
+    <button onclick="showAnalytics('monthlyAnalytics')">
+        Monthly
+    </button>
+
+    <button onclick="showAnalytics('yearlyAnalytics')">
+        Yearly
+    </button>
+
+    <button class="close-btn" onclick="hideAnalytics()">
+        Hide
+    </button>
+</div>
+
+
+<script>
+function showAnalytics(sectionId) {
+    const sections = document.querySelectorAll(".analytics-section");
+
+    sections.forEach(section => {
+        section.style.display = "none";
+    });
+
+    const selectedSection = document.getElementById(sectionId);
+
+    if (selectedSection) {
+        selectedSection.style.display = "block";
+        selectedSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+}
+
+function hideAnalytics() {
+    const sections = document.querySelectorAll(".analytics-section");
+
+    sections.forEach(section => {
+        section.style.display = "none";
+    });
+}
+</script>
 
 </body>
 </html>
