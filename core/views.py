@@ -317,8 +317,8 @@ def auto_control_logic(block):
     morning_start = datetime.strptime("06:00", "%H:%M").time()
     morning_end = datetime.strptime("07:00", "%H:%M").time()
 
-    afternoon_start = datetime.strptime("10:40", "%H:%M").time()
-    afternoon_end = datetime.strptime("11:00", "%H:%M").time()
+    afternoon_start = datetime.strptime("10:00", "%H:%M").time()
+    afternoon_end = datetime.strptime("14:00", "%H:%M").time()
 
     is_morning = morning_start <= current_time <= morning_end
     is_afternoon = afternoon_start <= current_time <= afternoon_end
