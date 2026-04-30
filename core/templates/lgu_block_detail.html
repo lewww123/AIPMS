@@ -126,6 +126,50 @@
             font-size: 0.9rem;
         }
 
+        .dry-peak-card {
+            background: linear-gradient(135deg, #fff7ed, #ffffff);
+            border: 1px solid #fed7aa;
+            border-left: 6px solid #ea580c;
+            border-radius: 18px;
+            padding: 18px;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .dry-peak-label {
+            color: #9a3412;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            margin-bottom: 5px;
+        }
+
+        .dry-peak-value {
+            color: #7c2d12;
+            font-size: 1.6rem;
+            font-weight: 900;
+        }
+
+        .dry-peak-sub {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .dry-peak-row {
+            background: #fff7ed !important;
+            box-shadow: inset 5px 0 0 #ea580c;
+        }
+
+        .dry-peak-row td {
+            font-weight: 700;
+            color: #7c2d12;
+        }
+
         @media (max-width: 768px) {
             .page-wrapper {
                 padding: 1rem;
@@ -135,6 +179,10 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 10px;
+            }
+
+            .dry-peak-card {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -325,123 +373,6 @@
 
     </div>
 
-    <!-- SENSOR HISTORY -->
-    <div class="panel section-gap">
-        <h3 class="section-title">
-            <i class="fas fa-clock-rotate-left"></i> Sensor History Logs
-        </h3>
-
-        <p class="help-text">
-            This table shows the previous sensor readings recorded for this specific block.
-        </p>
-
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Moisture</th>
-                        <th>pH</th>
-                        <th>Temperature</th>
-                        <th>Rain</th>
-                        <th>Tank Level</th>
-                        <th>Pump</th>
-                        <th>Mode</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for data in sensor_history %}
-                    <tr>
-                        <td>{{ data.timestamp|localtime|date:"M d, Y h:i A" }}</td>
-                        <td>{{ data.soil_moisture }}%</td>
-                        <td>{{ data.ph_level }}</td>
-                        <td>{{ data.temperature }}°C</td>
-
-                        <td>
-                            {% if data.is_raining %}
-                                <span class="badge badge-blue">Raining</span>
-                            {% else %}
-                                <span class="badge badge-green">Clear</span>
-                            {% endif %}
-                        </td>
-
-                        <td>{{ data.water_tank_level }}%</td>
-
-                        <td>
-                            {% if data.pump_status %}
-                                <span class="badge badge-green">ON</span>
-                            {% else %}
-                                <span class="badge badge-red">OFF</span>
-                            {% endif %}
-                        </td>
-
-                        <td>{{ data.mode|title }}</td>
-                    </tr>
-
-                    {% empty %}
-                    <tr>
-                        <td colspan="8">No sensor history found for this block.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- WATER LOGS -->
-    <div class="panel section-gap">
-        <h3 class="section-title">
-            <i class="fas fa-droplet"></i> Irrigation / Water Logs
-        </h3>
-
-        <p class="help-text">
-            Water used is estimated based on pump flow rate and pump running time.
-        </p>
-
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Estimated Water Used</th>
-                        <th>Moisture</th>
-                        <th>Mode</th>
-                        <th>Note</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for log in water_logs %}
-                    <tr>
-                        <td>{{ log.timestamp|localtime|date:"M d, Y h:i A" }}</td>
-
-                        <td>
-                            {% if log.amount > 0 %}
-                                {{ log.amount|floatformat:4 }} m³
-                                <br>
-                                <small>{{ log.amount|floatformat:4 }} × 1000 L estimated</small>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <td>{{ log.moisture_at_time }}%</td>
-                        <td>{{ log.mode|title }}</td>
-                        <td>{{ log.note|default:"Regular cycle" }}</td>
-                    </tr>
-
-                    {% empty %}
-                    <tr>
-                        <td colspan="5">No water logs found for this block.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-
     <!-- PROFESSIONAL ANALYTICS TABS -->
     <div class="panel section-gap">
         <h3 class="section-title">
@@ -451,6 +382,65 @@
         <p class="help-text">
             View summarized block readings by daily, monthly, or yearly records.
         </p>
+
+        <!-- HIGHEST DRY PEAK -->
+        {% if dry_peak %}
+        <div class="dry-peak-card">
+            <div>
+                <div class="dry-peak-label">
+                    <i class="fas fa-triangle-exclamation"></i> Highest Dry Peak
+                </div>
+
+                <div class="dry-peak-value">
+                    {{ dry_peak.soil_moisture }}%
+                </div>
+
+                <div class="dry-peak-sub">
+                    Lowest soil moisture recorded below the dry threshold.
+                </div>
+            </div>
+
+            <div>
+                <div class="dry-peak-label">Day and Date</div>
+
+                <div class="dry-peak-value" style="font-size:1.2rem;">
+                    {{ dry_peak.timestamp|localtime|date:"M d, Y" }}
+                </div>
+
+                <div class="dry-peak-sub">
+                    {{ dry_peak.timestamp|localtime|date:"l" }}
+                </div>
+            </div>
+
+            <div>
+                <div class="dry-peak-label">Time</div>
+
+                <div class="dry-peak-value" style="font-size:1.2rem;">
+                    {{ dry_peak.timestamp|localtime|date:"h:i A" }}
+                </div>
+
+                <div class="dry-peak-sub">
+                    Dry Threshold: {{ block.dry_threshold }}%
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="dry-peak-card">
+            <div>
+                <div class="dry-peak-label">
+                    <i class="fas fa-circle-check"></i> Highest Dry Peak
+                </div>
+
+                <div class="dry-peak-value">
+                    No dry peak
+                </div>
+
+                <div class="dry-peak-sub">
+                    No soil moisture reading has gone below the dry threshold yet.
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <div class="analytics-tabs">
             <button type="button" class="analytics-tab-btn active" onclick="showAnalyticsTab('dailyAnalytics', this)">
@@ -580,6 +570,122 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- SENSOR HISTORY -->
+    <div class="panel section-gap">
+        <h3 class="section-title">
+            <i class="fas fa-clock-rotate-left"></i> Sensor History Logs
+        </h3>
+
+        <p class="help-text">
+            This table shows the previous sensor readings recorded for this specific block.
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Moisture</th>
+                        <th>pH</th>
+                        <th>Temperature</th>
+                        <th>Rain</th>
+                        <th>Tank Level</th>
+                        <th>Pump</th>
+                        <th>Mode</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for data in sensor_history %}
+                    <tr class="{% if dry_peak and data.id == dry_peak.id %}dry-peak-row{% endif %}">
+                        <td>{{ data.timestamp|localtime|date:"M d, Y h:i A" }}</td>
+                        <td>{{ data.soil_moisture }}%</td>
+                        <td>{{ data.ph_level }}</td>
+                        <td>{{ data.temperature }}°C</td>
+
+                        <td>
+                            {% if data.is_raining %}
+                                <span class="badge badge-blue">Raining</span>
+                            {% else %}
+                                <span class="badge badge-green">Clear</span>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ data.water_tank_level }}%</td>
+
+                        <td>
+                            {% if data.pump_status %}
+                                <span class="badge badge-green">ON</span>
+                            {% else %}
+                                <span class="badge badge-red">OFF</span>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ data.mode|title }}</td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="8">No sensor history found for this block.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- WATER LOGS -->
+    <div class="panel section-gap">
+        <h3 class="section-title">
+            <i class="fas fa-droplet"></i> Irrigation / Water Logs
+        </h3>
+
+        <p class="help-text">
+            Water used is estimated based on pump flow rate and pump running time.
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Estimated Water Used</th>
+                        <th>Moisture</th>
+                        <th>Mode</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for log in water_logs %}
+                    <tr>
+                        <td>{{ log.timestamp|localtime|date:"M d, Y h:i A" }}</td>
+
+                        <td>
+                            {% if log.amount > 0 %}
+                                {{ log.amount|floatformat:4 }} m³
+                                <br>
+                                <small>{{ log.amount|floatformat:4 }} × 1000 L estimated</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>{{ log.moisture_at_time }}%</td>
+                        <td>{{ log.mode|title }}</td>
+                        <td>{{ log.note|default:"Regular cycle" }}</td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No water logs found for this block.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>
