@@ -317,8 +317,8 @@ def auto_control_logic(block):
     morning_start = datetime.strptime("06:00", "%H:%M").time()
     morning_end = datetime.strptime("07:00", "%H:%M").time()
 
-    afternoon_start = datetime.strptime("17:00", "%H:%M").time()
-    afternoon_end = datetime.strptime("19:00", "%H:%M").time()
+    afternoon_start = datetime.strptime("10:40", "%H:%M").time()
+    afternoon_end = datetime.strptime("11:00", "%H:%M").time()
 
     is_morning = morning_start <= current_time <= morning_end
     is_afternoon = afternoon_start <= current_time <= afternoon_end
@@ -1401,6 +1401,11 @@ def lgu_block_detail(request, block_id):
     sensor_history = SensorData.objects.filter(
         block=block
     ).order_by("-timestamp")[:100]
+    
+    dry_peak = SensorData.objects.filter(
+    block=block,
+    soil_moisture__lte=block.dry_threshold
+    ).order_by("soil_moisture", "timestamp").first()
 
     water_logs = WaterLog.objects.filter(
         block=block
