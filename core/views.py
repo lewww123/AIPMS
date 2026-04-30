@@ -305,7 +305,7 @@ def change_pin(request):
 
 # ================= AUTO CONTROL ENGINE =================
 def auto_control_logic(block):
-    current_time = now().time()
+    current_time = timezone.localtime(timezone.now()).time()
 
     control, _ = PumpControl.objects.get_or_create(block=block)
     latest_sensor = block.sensor_readings.first()
